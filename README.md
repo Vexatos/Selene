@@ -54,7 +54,7 @@ a <<= 4  -- equates 'a = a << 4'
 a ..= 4   -- equates 'a = a .. 4'
 
 s = "Hello, World!"
-s:=split(",") -- equates 's = s:split(",")'
+s := split(",") -- equates 's = s:split(",")'
 ```
 Having multiple operators in one term still works.
 ```lua
