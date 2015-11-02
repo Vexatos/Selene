@@ -1202,10 +1202,14 @@ local function loadSeleneConstructs()
   end
 end
 
-local function loadSelene(env)
+local function loadSelene(env, lvMode)
   if not env or type(env) ~= "table" then env = _G or _ENV end
   if env._selene and env._selene.isLoaded then return end
   if not env._selene then env._selene = {} end
+
+  if lvMode then
+    env._selene.liveMode = true
+  end
 
   env._selene._new = newWrappedTable
   if not env.checkArg then env.checkArg = checkArg end
@@ -1296,6 +1300,7 @@ local function unloadSelene(env)
     env.bit32.bfor = nil
     env.bit32.nfor = nil
   end
+  env._selene.isLoaded = false
 end
 
 if _selene and not _selene.isLoaded and _selene.doAutoload then

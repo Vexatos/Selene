@@ -124,6 +124,8 @@ local function tokenize(value, stripcomments, utime)
       end
     elseif char == "=" and not quoted and token == "" and tokens[#tokens] and (string.find(tokens[#tokens], "^[%+%-%*/%%^&|><%.:]$") or string.find(tokens[#tokens], "^([/<>%.])%1$")) then
       tokens[#tokens] = tokens[#tokens] .. char
+    elseif not quoted and token == "" and tokens[#tokens] and ((char == ">" and string.find(tokens[#tokens], "^[%-=]$")) or (char == "-" and string.find(tokens[#tokens], "^<$"))) then
+      tokens[#tokens] = tokens[#tokens] .. char
     elseif not quoted and string.find(char, "^[/<>%.%$]$") then
       if waiting == false and token == "" and tokens[#tokens] and string.find(tokens[#tokens], "^%"..char.."$") then
         tokens[#tokens] = tokens[#tokens] .. char
@@ -146,8 +148,6 @@ local function tokenize(value, stripcomments, utime)
       end
       table.insert(tokens, char)
       table.insert(tokenlines, lines)
-    elseif not quoted and token == "" and tokens[#tokens] and ((char == ">" and string.find(tokens[#tokens], "^[%-=]$")) or (char == "-" and string.find(tokens[#tokens], "^<$"))) then
-      tokens[#tokens] = tokens[#tokens] .. char
     else -- normal char
       token = token .. char
     end
