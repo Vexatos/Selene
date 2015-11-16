@@ -220,6 +220,7 @@ These are the functions you can call on wrapped tables. `$()` represents a wrapp
  - `$():exists(f:function):boolean` This returns true if `f` returns `true` on any of the elements.
  - `$():forall(f:function):boolean` This returns true if `f` returns `true` on every element in the table.
  - `$():shallowcopy()` This works exactly like `table.shallowcopy`.
+ - `$():call(f:function, ...):anything` This calls `f` with the internal table and any added parameters as arguments. Returns the value `f` returns. If `f` returns a table or string, it will be wrapped before being returned.
  - `$l():drop(n:number):list` This function will remove the first `n` entries from the list and return a list with the dropped entries.
  - `$l():dropright(n:number):list` This function will remove the last `n` entries from the list and return a list with the dropped entries.
  - `$l():dropwhile(f:function):list` This works exactly like `string.dropwhile`, just that it will iterate through each key/value pair in the table and will return a list with the dropped entries.

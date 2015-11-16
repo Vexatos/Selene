@@ -791,6 +791,18 @@ local function tbl_zipped(one, two)
   return zipped
 end
 
+local function tbl_call(self, f, ...)
+  checkType(1, self)
+  checkFunc(2, f)
+  local res = f(self._tbl, ...)
+  local tRes = tblType(res)
+  if tRes == "table" or tRes == "string" then
+    return newWrappedTable(res)
+  else
+    return res
+  end
+end
+
 --------
 -- Bulk data operations on stringlists
 --------
@@ -1165,6 +1177,7 @@ local function loadSeleneConstructs()
   _Table.count = tbl_count
   _Table.exists = tbl_exists
   _Table.forall = tbl_forall
+  _Table.call = tbl_call
 
   _Table.shallowcopy = function(self)
     checkType(1, self)
@@ -1200,6 +1213,7 @@ local function loadSeleneConstructs()
     checkType(1, self, "stringlist")
     return str_iter(tostring(self))
   end
+  _String.call = tbl_call
 end
 
 local function loadSelene(env, lvMode)
