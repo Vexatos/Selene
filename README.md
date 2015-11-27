@@ -22,6 +22,8 @@ This is a Lua library I made for more convenient functional programming. It prov
     - [string](#string)
     - [Wrapped tables](#wrapped-tables-1)
     - [Wrapped strings](#wrapped-strings)
+  - [Running Selene](#running-selene)
+  - [How Live Mode works](#how-live-mode-works)
 
 #Syntax
 This is a list of the special syntax available in Selene.
@@ -240,3 +242,21 @@ Wrapped strings or stringslists can mostly be seen as lists and have most of the
 Functions they do not have are `concat`, `find`, `flatten`, `zip`, `containskey` and `flip`. All variations of `drop` and `take` will return strings, `filter`, `slice` and `reverse` will return stringlists, and they have two new functions:
  - `$s():split(sep:string or nil):list` This works exactly like `string.split`.
  - `$s():iter()` This works exactly like `string.iter`.
+
+#Running Selene
+This is an example for a Selene loader for the standard Lua interpreter. Make sure to add the folder called "selene" to some folder that exists in the package path.
+```lua
+local selene = require("selene")
+selene.load(nil, true)
+```
+Keep in mind that Selene is unable to parse any special syntax before `selene.load` is called (with live mode turned on), meaning the file it is being loaded in must not contain any Selene code itself when is is run.
+
+The value which `require("selene")` returns provides a few values.
+ - `selene.load([env:table [, liveMode:boolean]])` Initializes Selene.First argument is the environment to initialize in, `_G` by default. The second argument specifies whether the parser should be loaded too (to make Selene compile directly from source without you having to compile the code first using selene.parse). An alternative is to set `_G._selene.doAutoload` to `true` before you `require` the library.
+ - `selene.unload()` This removes the functions Selene adds to standard libraries like string and table again. It also disables the parser if it was enabled.
+ - `selene.parse(chunk:string [, stripcomments:boolean]):string` This parses the given chunk of Selene or Lua code into pure Lua code. Use this for implementing compilers in case you are not going to use live mode. `stripcomments` is true by default and will, if `true`, remove all comments from the compiled code to reduce parsing time (it will keep line numbers accurate).
+ - `selene.isLoaded():boolean` Returns `true` if Selene is currently loaded.
+ - `selene.parser` This is the parser object that Selene uses.
+
+#How Live Mode works
+If liveMode is turned on, Selene will intercept `_G.load` to parse code going through it before directing it to the actual `load` function. Since Selene is written purely in Lua, it is not possible to intercept on a lower level. If other code loading functions that do not call `load` themselves exist in your implementation, you might want to replace them with an implementation that redirects to `load` yourself, or make it call `selene.parse`. For more information, please refer to the implementation of `load` in Selene.
