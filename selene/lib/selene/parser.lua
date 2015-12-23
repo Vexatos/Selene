@@ -108,6 +108,12 @@ local function tokenize(value, stripcomments, utime)
       quoted = s .. char
       start = i - #s
       token = token .. char
+    elseif char == "-" and not quoted and token == "" and tokens[#tokens] and string.find(tokens[#tokens], "^%-$") then
+      token = tokens[#tokens] .. char
+      quoted = token
+      start = i - #(tokens[#tokens])
+      tokens[#tokens] = nil
+      tokenlines[#tokenlines] = nil
     elseif char == "[" and not quoted and string.find(token, "%[=*$") then -- derpy quote
       local s = string.match(token, "%[=*$")
       quoted = s .. char
@@ -122,7 +128,9 @@ local function tokenize(value, stripcomments, utime)
       if char == "\n" then
         lines = lines + 1
       end
-    elseif char == "=" and not quoted and token == "" and tokens[#tokens] and (string.find(tokens[#tokens], "^[%+%-%*/%%^&|><%.:]$") or string.find(tokens[#tokens], "^([/<>%.])%1$")) then
+    elseif char == "." and not quoted and token == "" and tokens[#tokens] and tokens[#tokens]==".." then
+      tokens[#tokens] = tokens[#tokens] .. char
+    elseif char == "=" and not quoted and token == "" and tokens[#tokens] and (string.find(tokens[#tokens], "^[%+%-%*/%%^&|><%.:~=]$") or string.find(tokens[#tokens], "^([/<>%.])%1$")) then
       tokens[#tokens] = tokens[#tokens] .. char
     elseif not quoted and token == "" and tokens[#tokens] and ((char == ">" and string.find(tokens[#tokens], "^[%-=]$")) or (char == "-" and string.find(tokens[#tokens], "^<$"))) then
       tokens[#tokens] = tokens[#tokens] .. char
@@ -140,7 +148,7 @@ local function tokenize(value, stripcomments, utime)
         table.insert(tokenlines, lines)
         waiting  = true
       end
-    elseif not quoted and string.find(char, "^[%(%):%?,%+%-%*%%^&|=]$") then
+    elseif not quoted and string.find(char, "^[%(%):%?,%+%-%*%%^&~|=]$") then
       if token ~= "" then
         table.insert(tokens, token)
         table.insert(tokenlines, lines)
