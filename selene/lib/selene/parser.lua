@@ -130,7 +130,7 @@ local function tokenize(value, stripcomments, utime)
       end
     elseif char == "." and not quoted and token == "" and tokens[#tokens] and tokens[#tokens]==".." then
       tokens[#tokens] = tokens[#tokens] .. char
-    elseif char == "=" and not quoted and token == "" and tokens[#tokens] and (string.find(tokens[#tokens], "^[%+%-%*/%%^&|><%.:~=]$") or string.find(tokens[#tokens], "^([/<>%.])%1$")) then
+    elseif char == "=" and not quoted and token == "" and tokens[#tokens] and (string.find(tokens[#tokens], "^[%+%-%*/%%^&|><%.:~]$") or string.find(tokens[#tokens], "^([/<>%.])%1$")) then
       tokens[#tokens] = tokens[#tokens] .. char
     elseif not quoted and token == "" and tokens[#tokens] and ((char == ">" and string.find(tokens[#tokens], "^[%-=]$")) or (char == "-" and string.find(tokens[#tokens], "^<$"))) then
       tokens[#tokens] = tokens[#tokens] .. char
@@ -148,7 +148,7 @@ local function tokenize(value, stripcomments, utime)
         table.insert(tokenlines, lines)
         waiting  = true
       end
-    elseif not quoted and string.find(char, "^[%(%):%?,%+%-%*%%^&~|=]$") then
+    elseif not quoted and string.find(char, "^[%(%):%?,%+%-%*%%^&~|]$") then
       if token ~= "" then
         table.insert(tokens, token)
         table.insert(tokenlines, lines)
