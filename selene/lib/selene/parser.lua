@@ -48,7 +48,8 @@ local function tokenize(value, stripcomments, utime)
     -- process last entry without touching the current char
     if not quoted and token == "." and tokens[#tokens] == ".." and waiting == false and not string.find(char, "%d") then
       waiting = nil
-      tokens[#tokens] = tokens[#tokens] .. "."
+      tokens[#tokens] = tokens[#tokens] .. token
+      token = ""
     end
 
     if escaped then -- escaped character
