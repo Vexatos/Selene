@@ -785,6 +785,7 @@ local function tbl_clear(self)
   for _, j in ipairs(rawkeys(self)) do
     self._tbl[j] = nil
   end
+  return self
 end
 
 local function tbl_keys(self)
@@ -841,6 +842,7 @@ local function tbl_tclear(self)
   for _, j in ipairs(rawkeys(self)) do
     self[j] = nil
   end
+  return self
 end
 
 --------
@@ -1145,7 +1147,7 @@ end
 -- Adding to global variables
 --------
 
-local VERSION = "Selene 0.1.0.1"
+local VERSION = "Selene 0.1.0.2"
 
 local function patchNativeLibs(env)
   env.string.foreach = str_foreach
