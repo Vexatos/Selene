@@ -178,6 +178,9 @@ The native `table` library got two new functions:
  - `table.range(start:number, stop:number [, step:number]):table` This will create a range of numbers ranging from `start` to `stop`, with a step size of `step` or 1.
  - `table.flip(t:table):table` Swaps every key in the table with its value and returns a new table.
  - `table.zipped(t1:table, t2:table):table` This will merge two tables into one if both have the same length, in the pattern `{{t1[1], t2[1]}, {t1[2], t2[2]}, ...}`
+ - `table.clear(t:table):table` This will remove every value stored in `t` and return `t`.
+ - `table.keys(t:table):table` Returns a new table containing all the keys stored in `t`. Will be in order if `t` can be iterated through using `ipairs`.
+ - `table.values(t:table):table` Returns a new table containing all the values stored in `t`. Will be in order if `t` can be iterated through using `ipairs`.
 
 ###string
 These functions will not work directly called on a string, i.e. `string.drop("Hello", 2)` will work but `("Hello"):drop(2)` will not. For that, use wrapped strings.
@@ -223,6 +226,9 @@ These are the functions you can call on wrapped tables. `$()` represents a wrapp
  - `$():forall(f:function):boolean` This returns true if `f` returns `true` on every element in the table.
  - `$():shallowcopy()` This works exactly like `table.shallowcopy`.
  - `$():call(f:function, ...):anything` This calls `f` with the internal table and any added parameters as arguments. Returns the value `f` returns. If `f` returns a table or string, it will be wrapped before being returned.
+ - `$():clear():list or map` This will remove every value stored in the table and return the table.
+ - `$():keys():list` Returns a new list containing all the keys stored in the table. Will be in order if this is a list.
+ - `$():values():list` Returns a new list containing all the values stored in the table. Will be in order if this is a list.
  - `$l():drop(n:number):list` This function will remove the first `n` entries from the list and return a list with the dropped entries.
  - `$l():dropright(n:number):list` This function will remove the last `n` entries from the list and return a list with the dropped entries.
  - `$l():dropwhile(f:function):list` This works exactly like `string.dropwhile`, just that it will iterate through each key/value pair in the table and will return a list with the dropped entries.

@@ -764,6 +764,39 @@ local function tbl_forall(self, f)
   return true
 end
 
+local function rawkeys(self)
+  local keys = {}
+  for i in mpairs(self) do
+    table.insert(keys, i)
+  end
+  return keys
+end
+
+local function rawvalues(self)
+  local values = {}
+  for _, j in mpairs(self) do
+    table.insert(values, j)
+  end
+  return values
+end
+
+local function tbl_clear(self)
+  checkType(1, self)
+  for _, j in ipairs(rawkeys(self)) do
+    self._tbl[j] = nil
+  end
+end
+
+local function tbl_keys(self)
+  checkType(1, self)
+  return newList(rawkeys(self))
+end
+
+local function tbl_values(self)
+  checkType(1, self)
+  return newList(rawvalues(self))
+end
+
 -- for the actual table library
 
 local function tbl_range(start, stop, step)
@@ -800,6 +833,13 @@ local function tbl_call(self, f, ...)
     return newWrappedTable(res)
   else
     return res
+  end
+end
+
+local function tbl_tclear(self)
+  checkType(1, self, "table")
+  for _, j in ipairs(rawkeys(self)) do
+    self[j] = nil
   end
 end
 
@@ -1142,6 +1182,15 @@ local function patchNativeLibs(env)
     return rawflip(tbl)
   end
   env.table.zipped = tbl_zipped
+  env.table.clear = tbl_tclear
+  env.table.keys = function(tbl)
+    checkArg(1, tbl, "table")
+    return rawkeys(tbl)
+  end
+  env.table.values = function(tbl)
+    checkArg(1, tbl, "table")
+    return rawvalues(tbl)
+  end
 
   if env.bit32 then
     env.bit32.bfor = bfor
@@ -1178,6 +1227,9 @@ local function loadSeleneConstructs()
   _Table.exists = tbl_exists
   _Table.forall = tbl_forall
   _Table.call = tbl_call
+  _Table.clear = tbl_clear
+  _Table.keys = tbl_keys
+  _Table.values = tbl_values
 
   _Table.shallowcopy = function(self)
     checkType(1, self)
@@ -1309,6 +1361,9 @@ local function unloadSelene(env)
   env.table.range = nil
   env.table.flip = nil
   env.table.zipped = nil
+  env.table.clear = nil
+  env.table.keys = nil
+  env.table.values = nil
 
   if env.bit32 then
     env.bit32.bfor = nil
