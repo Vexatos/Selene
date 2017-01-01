@@ -227,6 +227,9 @@ local function bracket(tChunk, plus, minus, step, result, incr, start)
   local curr = tChunk[step]
   local brackets = start or 1
   while brackets > 0 do
+    if not curr then
+      perror("missing " .. (incr > 0 and "closing" or "opening") .. " bracket '" .. minus .. "'")
+    end
     if curr:find(plus, 1, true) then
       brackets = brackets + 1
     end
