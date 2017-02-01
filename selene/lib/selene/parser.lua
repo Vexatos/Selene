@@ -292,7 +292,7 @@ local function findLambda(tChunk, i, part, line, tokenlines, stripcomments)
       perror("invalid lambda at index " .. i .. " (line " .. line .. "): invalid parameters: " .. table.concat(params, ","))
     end
   end
-  local func = "(_G._selene._newFunc(function(" .. table.concat(params, ",") .. ") " .. funcode .. " end, " .. tostring(#params) .. "))"
+  local func = "(_selene._newFunc(function(" .. table.concat(params, ",") .. ") " .. funcode .. " end, " .. tostring(#params) .. "))"
   for i = start, stop do
     table.remove(tChunk, start)
     table.remove(tokenlines, start)
@@ -305,17 +305,17 @@ end
 local function findDollars(tChunk, i, part, line, tokenlines)
   local curr = tChunk[i + 1]
   if curr:find("^%(") then
-    tChunk[i] = "_G._selene._new"
+    tChunk[i] = "_selene._new"
   elseif curr:find("^l") then
-    tChunk[i] = "_G._selene._newList"
+    tChunk[i] = "_selene._newList"
     table.remove(tChunk, i + 1)
     table.remove(tokenlines, i + 1)
   elseif curr:find("^f") then
-    tChunk[i] = "_G._selene._newFunc"
+    tChunk[i] = "_selene._newFunc"
     table.remove(tChunk, i + 1)
     table.remove(tokenlines, i + 1)
   elseif curr:find("^s") then
-    tChunk[i] = "_G._selene._newString"
+    tChunk[i] = "_selene._newString"
     table.remove(tChunk, i + 1)
     table.remove(tokenlines, i + 1)
   elseif tChunk[i - 1]:find("[:%.]$") then
@@ -388,7 +388,7 @@ local function findForeach(tChunk, i, part, line, tokenlines)
       return false
     end
   end
-  local func = table.concat(params, ",") .. " in _G.lpairs(" .. table.concat(vars, ",") .. ")"
+  local func = table.concat(params, ",") .. " in lpairs(" .. table.concat(vars, ",") .. ")"
   for i = start, stop do
     table.remove(tChunk, start)
     table.remove(tokenlines, start)
@@ -409,7 +409,7 @@ end
 
 local function findDollarAssignment(tChunk, i, part, line, tokenlines)
   if tChunk[i - 1]:find("^"..varPattern.."$") then
-    tChunk[i] = " = _G._selene._new(" .. tChunk[i-1] .. ")"
+    tChunk[i] = " = _selene._new(" .. tChunk[i-1] .. ")"
     return true
   else
     perror("invalid $$ at index " .. i .. " (line " .. line .. ")")
