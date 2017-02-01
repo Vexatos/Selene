@@ -292,7 +292,7 @@ local function findLambda(tChunk, i, part, line, tokenlines, stripcomments)
       perror("invalid lambda at index " .. i .. " (line " .. line .. "): invalid parameters: " .. table.concat(params, ","))
     end
   end
-  local func = "_G._selene._newFunc(function(" .. table.concat(params, ",") .. ") " .. funcode .. " end, " .. tostring(#params) .. ")"
+  local func = "(_G._selene._newFunc(function(" .. table.concat(params, ",") .. ") " .. funcode .. " end, " .. tostring(#params) .. "))"
   for i = start, stop do
     table.remove(tChunk, start)
     table.remove(tokenlines, start)

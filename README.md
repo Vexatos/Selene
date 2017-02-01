@@ -133,8 +133,9 @@ end
 Lambdas are wrapped in `()` brackets and always look like `(<var1> [, var2, ...] -> <operation>)`. Alternatively to the `->` you can also use `=>`.
 ```lua
 local t = {"one", "two"}
-t = $(t):filter((s -> s:find("t")))()
--- t should be {"two"} now
+local g = $(t):filter((s -> s:find("t")))()
+local h = $(t):filter(s -> s:find("t"))() -- Alternative: If the lambda function is the only parameter of a function, you can omit one set of brackets.
+-- g and h should both be {"two"} now
 local f = (s, r -> s + r) -- f is now a function that, once executed with the parameters s and r, returns the sum of s and r.
 ```
 It will automatically be parsed into a wrapped Lua function, and, if the lambda does not contain any `return`, automatically add a `return` in the front.
