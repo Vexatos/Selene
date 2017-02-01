@@ -120,7 +120,7 @@ for index, char in string.iter(s) do
   -- Here, string.iter is being used to give a string iterator
 end
 for index, char in $(s):iter do
-  -- Here, the wrapped string's iterator function is being used.
+  -- Here, the wrapped string's iterator function is being used.https://github.com/Vexatos/Selene#running-selene
 end
 ```
 ####Utility functions for wrapped tables
@@ -256,9 +256,9 @@ This is an example for a Selene loader for the standard Lua interpreter. Make su
 local selene = require("selene")
 selene.load(nil, true)
 ```
-Keep in mind that Selene is unable to parse any special syntax before `selene.load` is called (with live mode turned on), meaning the file it is being loaded in must not contain any Selene code itself when is is run.
+Keep in mind that Selene is unable to parse any special syntax before `selene.load` is called (with live mode turned on), meaning the file it is being loaded in must not contain any Selene code itself when it is run.
 
-The value which `require("selene")` returns provides a few values.
+The table which `require("selene")` returns provides a few values.
  - `selene.load([env:table [, liveMode:boolean]])` Initializes Selene.First argument is the environment to initialize in, `_G` by default. The second argument specifies whether the parser should be loaded too (to make Selene compile directly from source without you having to compile the code first using selene.parse). An alternative is to set `_G._selene.doAutoload` to `true` before you `require` the library.
  - `selene.unload()` This removes the functions Selene adds to standard libraries like string and table again. It also disables the parser if it was enabled.
  - `selene.parse(chunk:string [, stripcomments:boolean]):string` This parses the given chunk of Selene or Lua code into pure Lua code. Use this for implementing compilers in case you are not going to use live mode. `stripcomments` is true by default and will, if `true`, remove all comments from the compiled code to reduce parsing time (it will keep line numbers accurate).
