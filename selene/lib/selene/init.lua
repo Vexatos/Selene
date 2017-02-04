@@ -670,7 +670,7 @@ local function rawflatten(self)
   checkArg(1, self, "table")
   local flattened = {}
   for i, j in ipairs(self) do
-    if tblType(j) == "table" and isList(j) then
+    if type(j) == "table" and isList(j) then
       for k, v in ipairs(j) do
         if v ~= nil then
           table.insert(flattened, v)
@@ -686,6 +686,26 @@ end
 local function tbl_flatten(self)
   checkType(1, self, "list")
   return newListOrMap(rawflatten(self._tbl))
+end
+
+local function tbl_flatmap(self, f)
+  checkType(1, self)
+  checkFunc(2, f)
+  local mapped = {}
+  local parCnt = checkParCnt(parCount(f, 2))
+  for i, j in mpairs(self) do
+    local mk, mv = f(parCnt(i, j))
+    if mv == nil and type(mk) == "table" and isList(mk) then
+      for k, v in ipairs(mk) do
+        if v ~= nil then
+          insert(mapped, false, v)
+        end
+      end
+    elseif mk ~= nil then
+      insert(mapped, false, mk, mv)
+    end
+  end
+  return newListOrMap(mapped)
 end
 
 local function tbl_zip(self, other)
@@ -931,6 +951,26 @@ local function str_map(self, f)
   return newListOrMap(mapped)
 end
 
+local function str_flatmap(self, f)
+  checkArg(1, self, "string")
+  checkFunc(2, f)
+  local mapped = {}
+  local parCnt = checkParCnt(parCount(f))
+  for i = 1, #self do
+    local mk, mv = f(parCnt(i, self:sub(i, i)))
+    if mv == nil and type(mk) == "table" and isList(mk) then
+      for k, v in ipairs(mk) do
+        if v ~= nil then
+          insert(mapped, false, v)
+        end
+      end
+    elseif mk ~= nil then
+      insert(mapped, false, mk, mv)
+    end
+  end
+  return newListOrMap(mapped)
+end
+
 -- Only returns the characters that match the filter, returns a list
 local function str_filter(self, f)
   checkArg(1, self, "string")
@@ -1147,11 +1187,12 @@ end
 -- Adding to global variables
 --------
 
-local VERSION = "Selene 0.1.0.3"
+local VERSION = "Selene 0.1.0.4"
 
 local function patchNativeLibs(env)
   env.string.foreach = str_foreach
   env.string.map = str_map
+  env.string.flatmap = str_flatmap
   env.string.filter = str_filter
   env.string.drop = str_drop
   env.string.dropright = str_dropright
@@ -1204,6 +1245,7 @@ local function loadSeleneConstructs()
   _Table.concat = tbl_concat
   _Table.foreach = tbl_foreach
   _Table.map = tbl_map
+  _Table.flatmap = tbl_flatmap
   _Table.filter = tbl_filter
   _Table.drop = tbl_drop
   _Table.dropright = tbl_dropright
@@ -1240,6 +1282,7 @@ local function loadSeleneConstructs()
 
   _String.foreach = tbl_foreach
   _String.map = tbl_map
+  _String.flatmap = tbl_flatmap
   _String.filter = strl_filter
   _String.drop = strl_drop
   _String.dropright = strl_dropright
@@ -1337,6 +1380,7 @@ local function unloadSelene(env)
 
   env.string.foreach = nil
   env.string.map = nil
+  env.string.flatmap = nil
   env.string.filter = nil
   env.string.drop = nil
   env.string.dropright = nil

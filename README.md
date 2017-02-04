@@ -188,6 +188,7 @@ These functions will not work directly called on a string, i.e. `string.drop("He
 `function` may be a Lua function or a wrapped function (for instance a lambda).
  - `string.foreach(s:string, f:function)` This calls `f` once for every character in the string, with either the character or the index and the character as parameters.
  - `string.map(s:string, f:function):list or map` This function calls `f` once for every character in the string, with either the character or the index and the character as parameters, and inserts whatever it returns into a new table, which will then get returned as a list if possible and a map otherwise.
+ - `string.flatmap(s:string, f:function):list` This works like `string.map(s, f):flatten`, meaning that it will apply a function that returns tables and afterwards try to flatten the results. See `string.map` and `$l():flatten`.
  - `string.filter(s:string, f:function):string` This function calls `f` once for every character in the string, with either the character or the index and the character as parameters, and, if `f` returns `true`, will insert the character into a new string which will get returned, meaning that every character `f` returns `false` on will be removed.
  - `string.contains(val:string):boolean` This returns true if the string contains the string `val`.
  - `string.count(f:function):number` This returns the amount of characters in the string that `f` returns `true` on.
@@ -214,6 +215,7 @@ These are the functions you can call on wrapped tables. `$()` represents a wrapp
  - `$():concat(sep:string, i:number, j:number):string` This works exactly like `table.concat`.
  - `$():foreach(f:function)` This works exactly like `string.foreach`, just that it will iterate through each key/value pair in the table.
  - `$():map(f:function):list or map` This works exactly like `string.map`, just that it will iterate through each key/value pair in the table.
+ - `$():flatmap(f:function):list` This works like `$():map(f):flatten`, meaning that it will apply a function that returns tables and afterwards try to flatten the results. See `$():map` and `$l():flatten`.
  - `$():filter(f:function):list or map` This works exactly like `string.filter`, just that it will iterate through each key/value pair in the table and will return a list if possible, a map otherwise.
  - `$():fold(m:anything, f:function):anything` This works exactly like `$():foldleft`.
  - `$():foldleft(m:anything, f:function):anything` This works exactly like `string.foldleft`, just that it will iterate through each key/value pair in the table.
