@@ -65,7 +65,6 @@ end
   
 toParse = toParse:gsub("^#![^\n]+\n", "") -- remove shebang. sh will default to lua.
 local parsed = parser.parse(toParse, options.s == true)
-parsed = 'require("selene")\n' .. parsed
 
 -- decide on write function
 if options.r then
