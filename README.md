@@ -67,8 +67,12 @@ You can use `$(t: table or string)` to turn a table or a string into a wrapped t
 ```lua
 local t = {"one", "two"}
 t = $(t) -- Will create a list
+
+local q = $("one", "two") -- You can also call this function with multiple arguments, it will create a list using each argument as a value
+
 local p = {a="one", b="two"}
 p = $(p) -- Will create a map
+
 local s = "Fish"
 s = $(s) -- Will create a wrapped string, you can iterate through each character just like you can using a list.
 

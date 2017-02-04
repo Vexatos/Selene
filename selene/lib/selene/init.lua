@@ -251,8 +251,9 @@ smt.__tostring = smt.__call
 -- Initialization functions
 --------
 
-local function new(t)
-  checkArg(1, t, "table", "nil")
+local function new(...)
+  local t = ...
+  if #{...} > 1 or type(t) ~= "table" then t = {...} end
   t = t or {}
   local newObj = {}
   for i, j in pairs(_Table) do
@@ -296,8 +297,8 @@ local function newString(s)
   return newObj
 end
 
-local function newList(t)
-  local newObj = new(t)
+local function newList(...)
+  local newObj = new(...)
   for i in pairs(newObj._tbl) do
     if type(i) ~= "number" then
       error("[Selene] could not create list: bad table key: " .. i .. " is not a number", 2)
@@ -309,8 +310,8 @@ local function newList(t)
   return newObj
 end
 
-local function newListOrMap(t)
-  local newObj = new(t)
+local function newListOrMap(...)
+  local newObj = new(...)
   for i in pairs(newObj._tbl) do
     if type(i) ~= "number" then
       return newObj
