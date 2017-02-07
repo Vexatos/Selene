@@ -337,7 +337,9 @@ local function newFunc(f, parCnt)
   return newF
 end
 
-local function newWrappedTable(t)
+local function newWrappedTable(...)
+  local t = ...
+  if #{...} > 1 then t = {...} end
   if type(t) == "string" then
     return newString(t)
   else
