@@ -1324,7 +1324,10 @@ local function loadSelene(env, lvMode)
   end
 
   env._selene._new = newWrappedTable
-  if not env.checkArg then env.checkArg = checkArg end
+  if not env.checkArg then
+    env.checkArg = checkArg
+    env._selene._checkArg = true
+  end
   env._selene._newString = newString
   env._selene._newList = newList
   env._selene._newFunc = newFunc
@@ -1366,6 +1369,9 @@ local function unloadSelene(env)
   if not env._selene or not env._selene.isLoaded then return end
   if env._selene and env._selene.liveMode and env._selene.oldload then
     env.load = env._selene.oldload
+  end
+  if env._selene._checkArg then
+    env.checkArg = nil
   end
   do
     local liveMode = env._selene.liveMode
