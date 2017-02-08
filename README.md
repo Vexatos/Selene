@@ -13,6 +13,7 @@ This is a Lua library I made for more convenient functional programming. It prov
         - [String iterators](#string-iterators)
       - [Utility functions for wrapped tables](#utility-functions-for-wrapped-tables)
     - [Lambdas](#lambdas)
+      - [Conditional lambda functions](#conditional-lambda-functions)
       - [Utility functions for wrapped and normal functions](#utility-functions-for-wrapped-and-normal-functions)
     - [Ternary Operators](#ternary-operators)
     - [Foreach](#foreach)
@@ -143,10 +144,28 @@ local h = $(t):filter(s -> s:find("t"))() -- Alternative: If the lambda function
 local f = (s, r -> s + r) -- f is now a function that, once executed with the parameters s and r, returns the sum of s and r.
 ```
 It will automatically be parsed into a wrapped Lua function, and, if the lambda does not contain any `return`, automatically add a `return` in the front.
+####Conditional lambda functions
+Using the syntax `(<var1> [, var2, ...]! <condition> -> <operation>)`, you can specify a condition for the lambda function; the function will only be called if the condition is `true`.
+```lua
+local t = $(1, 2, nil, 6)
+local g = t:map(i, s! type(s) == "number" -> i + s)()
+-- g should be {2, 4, 10} now. Without the condition, it would error trying to calculate '3 + nil'.
+```
 ####Utility functions for wrapped and normal functions
  - `checkFunc(f:function, parCount:number...)` This function errors if the specified variable does not contain a function or a wrapped function. If it is a wrapped function, it will error if the amount of its parameters does not match any of the numbers given to this function.
  - `parCount(f:function, def:number or nil):number` This function errors if `f` is not a function or a wrapped function. If it is a normal function, it will return `def`. If it is a wrapped function, it will return the amount of its parameters. If it can't for some reason, it will return `def`.
  - `$f(f:function, parCount:number):wrapped function` This functions turns a normal Lua function into a wrapped function with the specified amount of parameters. This could be useful if you want to use `checkFunc` or `parCount` to depend on a specific number of parameters. You can call this wrapped function just like you can call any normal Lua function.
+
+Furthermore, wrapped functions provide their own function `$f().applies(...)`
+ ```lua
+ local f = (s! type(s) == "number" -> s * 2)
+ local c1 = f.applies(4) -- Should return 'true'
+ local c2 = f.applies("hello") -- Should return 'false'
+ 
+ -- On unconditional functions, 'applies' always returns 'true'
+ local f2 = (s -> s .. "4")
+ local c1 = f.applies(2) -- Should return 'true'
+ ```
 
 ###Ternary Operators
 Ternary operators are wrapped in `()` brackets and always look like `(<condition> ? <trueCase> : <falseCase>)`.

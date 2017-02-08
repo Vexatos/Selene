@@ -213,9 +213,21 @@ local mt = {
 
 local lmt = shallowcopy(mt)
 lmt.ltype = "list"
+lmt.__ipairs = function(tbl)
+  return function(tbl, i)
+    i = i + 1
+    if i <= #tbl then
+      return i, tbl[i]
+    end
+  end, tbl, 0
+end
+
+local function truef() return true end
 
 local fmt = {
   __call = function(fnc, ...)
+    local fm = getmetatable(fnc)
+    if fm.applies and not fm.applies(...) then return end
     return fnc._fnc(...)
   end,
   __len = function(fnc)
@@ -231,6 +243,10 @@ local fmt = {
     return tostring(fnc._fnc)
   end,
   __index = function(fnc, key)
+    if key == "applies" then
+      local fm = getmetatable(fnc)
+      return (not fm.applies and truef) or fm.applies
+    end
     return fnc._fnc[key]
   end,
   __newindex = mt.__newindex,
@@ -323,7 +339,7 @@ local function newListOrMap(...)
   return newObj
 end
 
-local function newFunc(f, parCnt)
+local function newFunc(f, parCnt, applies)
   checkArg(1, f, "function")
   checkArg(2, parCnt, "number")
   if parCnt < 0 then
@@ -332,6 +348,7 @@ local function newFunc(f, parCnt)
   local newF = {}
   local fm = shallowcopy(fmt)
   newF._fnc = f
+  fm.applies = applies
   fm.parCount = parCnt
   setmetatable(newF, fm)
   return newF
@@ -1190,7 +1207,7 @@ end
 -- Adding to global variables
 --------
 
-local VERSION = "Selene 0.1.0.4"
+local VERSION = "Selene 0.1.0.5"
 
 local function patchNativeLibs(env)
   env.string.foreach = str_foreach
