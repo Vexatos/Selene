@@ -329,6 +329,10 @@ local function findDollars(tChunk, i, part, line, tokenlines)
     tChunk[i] = "_selene._newString"
     table.remove(tChunk, i + 1)
     table.remove(tokenlines, i + 1)
+  elseif curr:find("^o") then
+    tChunk[i] = "_selene._newOptional"
+    table.remove(tChunk, i + 1)
+    table.remove(tokenlines, i + 1)
   elseif tChunk[i - 1]:find("[:%.]$") then
     tChunk[i - 1] = tChunk[i - 1]:sub(1, #(tChunk[i - 1]) - 1)
     tChunk[i] = "()"

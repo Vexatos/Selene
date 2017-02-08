@@ -280,6 +280,10 @@ local function new(...)
   return newObj
 end
 
+local function newOptional(...)
+  return new({...})
+end
+
 local function newStringList(s)
   checkArg(1, s, "table", "nil")
   s = s or {}
@@ -1350,6 +1354,7 @@ local function loadSelene(env, lvMode)
   env._selene._newString = newString
   env._selene._newList = newList
   env._selene._newFunc = newFunc
+  env._selene._newOptional = newOptional
   env._selene._VERSION = VERSION
   env._selene._parse = parse
   env.ltype = tblType

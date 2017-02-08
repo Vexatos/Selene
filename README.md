@@ -77,6 +77,9 @@ p = $(p) -- Will create a map
 local s = "Fish"
 s = $(s) -- Will create a wrapped string, you can iterate through each character just like you can using a list.
 
+-- You can use $o() to force wrapping strings or other tables.
+local ws = $o(s) -- Will create a singleton list containing only s
+
 local r = {"three", "four"}
 r$$      -- equates 'r = $(r)'
 ```
