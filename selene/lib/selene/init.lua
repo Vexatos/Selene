@@ -130,7 +130,7 @@ end
 
 local allMaps = { "map", "list", "stringlist" }
 
--- Errors is the value is not a valid type (list or map)
+-- Errors if the value is not a valid type (list or map)
 local function checkType(n, have, ...)
   have = tblType(have)
   local things = { ... }
@@ -179,6 +179,20 @@ local function checkFunc(n, have, ...)
     local msg = string.format("[Selene] bad argument #%d (%s parameter(s) expected, got %s)",
       n, table.concat({ ... }, " or "), haveParCount)
     error(msg, 3)
+  end
+end
+
+local function switch(o, ...)
+  for i, f in ipairs({...}) do
+    checkFunc(i + 1, f, 1)
+    if type(f) == "table" then
+      local fm = getmetatable(f)
+      if fm and fm.applies and fm.applies(o) then
+        return f._fnc(o)
+      end
+    else
+      return f(o)
+    end
   end
 end
 
@@ -1304,6 +1318,11 @@ local function loadSeleneConstructs()
     return newListOrMap(shallowcopy(self._tbl))
   end
 
+  _Table.switch = function(self, ...)
+    checkType(1, self)
+    return switch(self, ...)
+  end
+
   _String.foreach = tbl_foreach
   _String.map = tbl_map
   _String.flatmap = tbl_flatmap
@@ -1335,6 +1354,11 @@ local function loadSeleneConstructs()
     return str_iter(tostring(self))
   end
   _String.call = tbl_call
+
+  _String.switch = function(self, ...)
+    checkType(1, self, "stringlist")
+    return switch(self, ...)
+  end
 end
 
 local function loadSelene(env, lvMode)
@@ -1363,6 +1387,7 @@ local function loadSelene(env, lvMode)
   env.parCount = parCount
   env.lpairs = lpairs
   env.isList = isList
+  env.switch = switch
 
   patchNativeLibs(env)
   loadSeleneConstructs(env)
@@ -1408,6 +1433,7 @@ local function unloadSelene(env)
   env.parCount = nil
   env.lpairs = nil
   env.isList = nil
+  env.switch = nil
 
   env.string.foreach = nil
   env.string.map = nil

@@ -363,7 +363,7 @@ local function findTernary(tChunk, i, part, line, tokenlines)
   end
   local trueCase = case:sub(1, case:find(":", 1, true) - 1)
   local falseCase = case:sub(case:find(":", 1, true) + 1)
-  local ternary = "(function() if " .. cond .. " then return " .. trueCase .. " else return " .. falseCase .. " end end)()"
+  local ternary = string.format("(function() if %s then return %s else return %s end end)()", cond, trueCase, falseCase)
   for i = start, stop do
     table.remove(tChunk, start)
     table.remove(tokenlines, start)

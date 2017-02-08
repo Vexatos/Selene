@@ -64,7 +64,7 @@ Having multiple operators in one term still works.
 a *= 4 + 7  -- equates 'a = a * 4 + 7' (mind the order of operations)
 ```
 ###Wrapped tables
-You can use `$(t: table or string)` to turn a table or a string into a wrapped table or string to perform bulk data operations on them. If the table is a list (i.e. if every key in the table is a number valid for `ipairs`), it will automatically create a list, otherwise it will create a map.
+You can use `$(t:table or string)` to turn a table or a string into a wrapped table or string to perform bulk data operations on them. If the table is a list (i.e. if every key in the table is a number valid for `ipairs`), it will automatically create a list, otherwise it will create a map.
 ```lua
 local t = {"one", "two"}
 t = $(t) -- Will create a list
@@ -132,7 +132,7 @@ for index, char in $(s):iter do
 end
 ```
 ####Utility functions for wrapped tables
- - `ltype(t: anything):string` This functions works just like `type`, just that it, if it finds a wrapped table, may return `"map"`, `"list"` or `"stringlist"`.
+ - `ltype(t:anything):string` This functions works just like `type`, just that it, if it finds a wrapped table, may return `"map"`, `"list"` or `"stringlist"`.
  - `checkType(n:number, t:anything, types:string...)` This function errors when `t` does not match any of the specified types of wrapped tables. `n` is the index of the parameter, used for a more descriptive error message. if no type is specified, it will error if `t` is not a wrapped table.
  - `lpairs(t:wrapped table)` This functions works just like `ipairs` when called with a list or wrapped string and just like `pairs` when called with anything else.
  - `isList(t:wrapped table or table):boolean` This function returns true if the table is either a list (as a wrapped table) or a normal table that can be turned into a list (i.e. if every key in the table is a number valid for `ipairs`)
@@ -192,6 +192,17 @@ This is a list of the functions available on wrapped tables or strings as specif
 
 ###global
  - `checkArg(n:number, obj:anything, types:string...)` This function errors when `obj` does not match any of the specified types. `n` is the index of the parameter, used for a more descriptive error message.
+ - `switch(o:anything, funcs:function...)` This function returns the result of the first function `f` in `funcs` which `f.applies(o)` returns `true` for.
+ If the function is not a [conditional function](#conditional-lambda-functions), it will always be called (`f.applies(o)` defaults to `true`).
+```lua
+local g = $(2, 4, 6, 10)
+local r = switch(g,
+  (n! #n > 5 -> "Hello"),
+  (n! #n > 3 -> "World"),
+  (n! #n > 1 -> "Banana")
+)
+-- r should be "World" now, because the second function is the first the condition of which holds true for with this instance of g. 
+ ```
 
 ###bit32
 Firstly, Selene adds two convenient functions to the `bit32` library (these functions are not available in Lua 5.3+), called fish-or or `for`:
@@ -243,6 +254,7 @@ These are the functions you can call on wrapped tables. `$()` represents a wrapp
  - `$():map(f:function):list or map` This works exactly like `string.map`, just that it will iterate through each key/value pair in the table.
  - `$():flatmap(f:function):list` This works like `$():map(f):flatten`, meaning that it will apply a function that returns tables and afterwards try to flatten the results. See `$():map` and `$l():flatten`.
  - `$():filter(f:function):list or map` This works exactly like `string.filter`, just that it will iterate through each key/value pair in the table and will return a list if possible, a map otherwise.
+ - `$():switch(funcs:function...)` This is equivalent to `switch($(), ...)`.
  - `$():fold(m:anything, f:function):anything` This works exactly like `$():foldleft`.
  - `$():foldleft(m:anything, f:function):anything` This works exactly like `string.foldleft`, just that it will iterate through each key/value pair in the table.
  - `$():foldright(m:anything, f:function):anything` This works exactly like `$():foldleft`, just that it starts iterating at the end of the list.
