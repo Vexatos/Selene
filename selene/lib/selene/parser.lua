@@ -1,13 +1,3 @@
-local unicode
-
-do
-  local done
-  done, unicode = pcall(require, "unicode")
-  if not done then
-    unicode = string
-  end
-end
-
 local selenep = {}
 
 local timeout
@@ -42,27 +32,26 @@ do
 end
 
 local function tokenize(value, stripcomments, utime)
-  if not type(stripcomments) == "boolean" then stripcomments = true end
-  if not value:find("\n$") then value = value .. "\n" end
+  if stripcomments == nil then stripcomments = true end
   local tokenlines, lines, skiplines = {}, 1, {}
   local tokens, token = {}, ""
   local escaped, quoted, start = false, false, -1
   local waiting
-  for i = 1, unicode.len(value) do
+  for i = 1, #value do
     if timeout and utime then
       if timeout.time() >= utime + timeout.wait() then
         timeout.yield()
         utime = timeout.time()
       end
     end
-    local char = unicode.sub(value, i, i)
+    local char = string.sub(value, i, i)
 
     if escaped and not escapable[quoted] then
       escaped = false
     end
 
     -- process last entry without touching the current char
-    if not quoted and token == "." and tokens[#tokens] == ".." and waiting == false and not string.find(char, "%d") then
+    if not quoted and token == "." and tokens[#tokens] == ".." and waiting == false and not string.find(char, "^%d$") then
       waiting = nil
       tokens[#tokens] = tokens[#tokens] .. token
       token = ""
@@ -78,13 +67,13 @@ local function tokenize(value, stripcomments, utime)
       quoted = false
       if token ~= "" then
         if not stripcomments then
-          table.insert(tokens, token)
-          table.insert(tokenlines, lines)
+          tokens[#tokens + 1] = token
+          tokenlines[#tokenlines + 1] = lines
         end
         token = ""
       end
       lines = lines + 1
-    elseif char == "]" and quoted and string.find(token, "%]=*$") and string.find(quoted, "^%-%-%[=*%[") and #(string.match(token, "%]=*$") .. char) == #quoted - 2 then
+    elseif char == "]" and quoted and string.find(token, "%]=*$") and string.find(quoted, "^%-%-%[=*%[") and #string.match(token, "%]=*$") == #quoted - 3 then
       quoted = false
       token = token .. char
       if stripcomments then
@@ -92,12 +81,12 @@ local function tokenize(value, stripcomments, utime)
           lines = lines + 1
         end
       else
-        table.insert(tokens, token)
-        table.insert(tokenlines, lines)
+        tokens[#tokens + 1] = token
+        tokenlines[#tokenlines + 1] = lines
         skiplines[#tokenlines] = {}
         for w in token:gmatch("\n") do
           lines = lines + 1
-          table.insert(skiplines[#tokenlines], lines)
+          skiplines[#tokenlines][#skiplines[#tokenlines] + 1] = lines
         end
       end
       token = ""
@@ -108,18 +97,18 @@ local function tokenize(value, stripcomments, utime)
     elseif char == quoted and escapable[char] then -- end of quoted string
       quoted = false
       token = token .. char
-      table.insert(tokens, token)
-      table.insert(tokenlines, lines)
+      tokens[#tokens + 1] = token
+      tokenlines[#tokenlines + 1] = lines
       token = ""
     elseif char == "]" and quoted and string.find(token, "%]=*$") and string.find(quoted, "^%[=*%[") and #(string.match(token, "%]=*$") .. char) == #quoted then
       quoted = false
       token = token .. char
-      table.insert(tokens, token)
-      table.insert(tokenlines, lines)
+      tokens[#tokens + 1] = token
+      tokenlines[#tokenlines + 1] = lines
       skiplines[#tokenlines] = {}
       for w in token:gmatch("\n") do
         lines = lines + 1
-        table.insert(skiplines[#tokenlines], lines)
+        skiplines[#tokenlines][#skiplines[#tokenlines] + 1] = lines
       end
       token = ""
     elseif not quoted and escapable[char] then
@@ -143,8 +132,8 @@ local function tokenize(value, stripcomments, utime)
       token = token .. char
     elseif not quoted and string.find(char, "%s") then -- delimiter
       if token ~= "" then
-        table.insert(tokens, token)
-        table.insert(tokenlines, lines)
+        tokens[#tokens + 1] = token
+        tokenlines[#tokenlines + 1] = lines
         token = ""
       end
       if char == "\n" then
@@ -161,12 +150,12 @@ local function tokenize(value, stripcomments, utime)
       if waiting == false and string.sub(token, #token) == "." then
         token = string.sub(token, 1, #token - 1)
         if token and token ~= "" then
-          table.insert(tokens, token)
-          table.insert(tokenlines, lines)
+          tokens[#tokens + 1] = token
+          tokenlines[#tokenlines + 1] = lines
           token = ""
         end
-        table.insert(tokens, "..")
-        table.insert(tokenlines, lines)
+        tokens[#tokens + 1] = ".."
+        tokenlines[#tokenlines + 1] = lines
         waiting = nil
       else
         token = token .. char
@@ -178,22 +167,22 @@ local function tokenize(value, stripcomments, utime)
         waiting = nil
       else
         if token ~= "" then
-          table.insert(tokens, token)
-          table.insert(tokenlines, lines)
+          tokens[#tokens + 1] = token
+          tokenlines[#tokenlines + 1] = lines
           token = ""
         end
-        table.insert(tokens, char)
-        table.insert(tokenlines, lines)
+        tokens[#tokens + 1] = char
+        tokenlines[#tokenlines + 1] = lines
         waiting = true
       end
     elseif not quoted and specialchars[char] then
       if token ~= "" then
-        table.insert(tokens, token)
-        table.insert(tokenlines, lines)
+        tokens[#tokens + 1] = token
+        tokenlines[#tokenlines + 1] = lines
         token = ""
       end
-      table.insert(tokens, char)
-      table.insert(tokenlines, lines)
+      tokens[#tokens + 1] = char
+      tokenlines[#tokenlines + 1] = lines
     else -- normal char
       token = token .. char
     end
@@ -207,8 +196,8 @@ local function tokenize(value, stripcomments, utime)
     return nil, "unclosed quote at index " .. start
   end
   if token ~= "" then
-    table.insert(tokens, token)
-    table.insert(tokenlines, lines)
+    tokens[#tokens + 1] = token
+    tokenlines[#tokenlines + 1] = lines
     lines = lines + 1
   end
   return tokens, tokenlines, skiplines, utime
@@ -396,7 +385,7 @@ local function findForeach(tChunk, i, part, line, tokenlines)
     if tChunk[step] == "do" then
       stop = step - 1
     else
-      table.insert(vars, tChunk[step])
+      vars[#vars + 1] = tChunk[step]
       step = step + 1
     end
   end
@@ -489,7 +478,7 @@ local function concatWithLines(tbl, lines, skiplines)
   local deadlines = {}
   for i, j in ipairs(lines) do
     if not chunktbl[j] then chunktbl[j] = {} end
-    table.insert(chunktbl[j], tbl[i])
+    chunktbl[j][#chunktbl[j] + 1] = tbl[i]
     last = math.max(last, j)
     if skiplines[i] then
       for _, v in ipairs(skiplines[i]) do
