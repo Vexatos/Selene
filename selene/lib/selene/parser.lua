@@ -205,7 +205,7 @@ end
 
 -------------------------------------------------------------------------------
 
-local varPattern = "[%a_][%w_]*"
+local varPattern = "^[%a_][%w_]*$"
 --local lambdaParPattern = "("..varPattern..")((%s*,%s*)("..varPattern.."))*"
 
 local function perror(msg, lvl)
@@ -217,27 +217,28 @@ end
 local function bracket(tChunk, plus, minus, step, result, incr, start)
   local curr = tChunk[step]
   local brackets = start or 1
+  local res = { result }
   while brackets > 0 do
     if not curr then
       perror("missing " .. (incr > 0 and "closing" or "opening") .. " bracket '" .. minus .. "'")
     end
-    if curr:find(plus, 1, true) then
+    if curr == plus then
       brackets = brackets + 1
     end
-    if curr:find(minus, 1, true) then
+    if curr == minus then
       brackets = brackets - 1
     end
     if brackets > 0 then
       if incr > 0 then
-        result = result .. " " .. curr
+        table.insert(res, curr)
       else
-        result = curr .. " " .. result
+        table.insert(res, 1, curr)
       end
       step = step + incr
       curr = tChunk[step]
     end
   end
-  return result, step
+  return table.concat(res, " "), step
 end
 
 local function split(self, sep)
@@ -290,7 +291,7 @@ local function findLambda(tChunk, i, part, line, tokenlines, stripcomments)
     funcode = tryAddReturn(funcode, stripcomments)
   end
   for _, s in ipairs(params) do
-    if not s:find("^" .. varPattern .. "$") then
+    if not s:find(varPattern) then
       perror("invalid lambda at index " .. i .. " (line " .. line .. "): invalid parameters: " .. table.concat(params, ","))
     end
   end
@@ -391,11 +392,11 @@ local function findForeach(tChunk, i, part, line, tokenlines)
   end
   vars = split(table.concat(vars), ",")
   for _, p in ipairs(params) do
-    if not p:find("^" .. varPattern .. "$") then
+    if not p:find(varPattern) then
       return false
     end
   end
-  local func = table.concat(params, ",") .. " in lpairs(" .. table.concat(vars, ",") .. ")"
+  local func = string.format("%s in lpairs(%s)", table.concat(params, ","), table.concat(vars, ","))
   for i = start, stop do
     table.remove(tChunk, start)
     table.remove(tokenlines, start)
@@ -415,7 +416,7 @@ local function findAssignmentOperator(tChunk, i)
 end
 
 local function findDollarAssignment(tChunk, i, part, line, tokenlines)
-  if tChunk[i - 1]:find("^" .. varPattern .. "$") then
+  if tChunk[i - 1]:find(varPattern) then
     tChunk[i] = " = _selene._new(" .. tChunk[i - 1] .. ")"
     return i, i
   else
@@ -543,8 +544,8 @@ local function parse(chunk, stripcomments)
   if not tChunk then
     error(tokenlines)
   end
-  local changed = false
-  for i = 1, #tChunk do
+  local i = 1
+  while i <= #tChunk do
     local part = tChunk[i]
     if keywords[part] then
       if not tChunk[i + 1] then tChunk[i + 1] = "" end
@@ -571,17 +572,10 @@ local function parse(chunk, stripcomments)
             table.insert(skiplines, start, data[3])
           end
         end
-        changed = true
-        i = i + #toInsert
+        i = start - 1
       end
     end
-  end
-  if changed then
-    local cnk = concatWithLines(tChunk, tokenlines, skiplines)
-    tokenlines = nil
-    skiplines = nil
-    tChunk = nil
-    return parse(cnk, stripcomments)
+    i = i + 1
   end
   return concatWithLines(tChunk, tokenlines, skiplines)
 end
