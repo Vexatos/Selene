@@ -1,7 +1,7 @@
 Selene
 ======
 
-![The selene logo](logo/selene-logo-empty.png)
+<img src="logo/selene-logo-empty.png" width="300" />
 
 This is a Lua library I made for more convenient functional programming. It provides special syntax as well as convenient functions on tables and strings.
 ### Table of contents
