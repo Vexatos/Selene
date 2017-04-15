@@ -6,7 +6,6 @@ Author: Vexatos
 --------
 -- Utils
 --------
-
 local function checkArg(n, have, ...)
   have = type(have)
   local function check(want, ...)
@@ -183,7 +182,7 @@ local function checkFunc(n, have, ...)
 end
 
 local function switch(o, ...)
-  for i, f in ipairs({...}) do
+  for i, f in ipairs({ ... }) do
     checkFunc(i + 1, f, 1)
     if type(f) == "table" then
       local fm = getmetatable(f)
@@ -283,7 +282,7 @@ smt.__tostring = smt.__call
 
 local function new(...)
   local t = ...
-  if #{...} > 1 or type(t) ~= "table" then t = {...} end
+  if #{ ... } > 1 or type(t) ~= "table" then t = { ... } end
   t = t or {}
   local newObj = {}
   for i, j in pairs(_Table) do
@@ -295,7 +294,7 @@ local function new(...)
 end
 
 local function newOptional(...)
-  return new({...})
+  return new({ ... })
 end
 
 local function newStringList(s)
@@ -374,7 +373,7 @@ end
 
 local function newWrappedTable(...)
   local t = ...
-  if #{...} > 1 then t = {...} end
+  if #{ ... } > 1 then t = { ... } end
   if type(t) == "string" then
     return newString(t)
   else
@@ -390,7 +389,7 @@ mt.__concat = function(first, second)
   local fType = tblType(first)
   if fType == "map" and type(second) == "table" then
     local merged = shallowcopy(first._tbl)
-    for k,v in lpairs(second) do
+    for k, v in lpairs(second) do
       merged[k] = v
     end
     return newListOrMap(merged)
@@ -405,7 +404,7 @@ local function concatOnCondition(first, second, cond)
   local fType = tblType(first)
   if (fType == "list" or fType == "stringlist") and cond(second) then
     local merged = shallowcopy(first._tbl)
-    for _,v in ipairs(second) do
+    for _, v in ipairs(second) do
       table.insert(merged, v)
     end
     return newListOrMap(merged)

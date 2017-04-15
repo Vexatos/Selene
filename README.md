@@ -1,8 +1,10 @@
 Selene
 ======
 
+![The selene logo](logo/selene-logo-empty.png)
+
 This is a Lua library I made for more convenient functional programming. It provides special syntax as well as convenient functions on tables and strings.
-###Table of contents
+### Table of contents
   - [Syntax](#syntax)
     - [Smart self-calling](#smart-self-calling)
     - [Assignment operators](#assignment-operators)
@@ -26,9 +28,9 @@ This is a Lua library I made for more convenient functional programming. It prov
   - [Running Selene](#running-selene)
   - [How Live Mode works](#how-live-mode-works)
 
-#Syntax
+# Syntax
 This is a list of the special syntax available in Selene.
-###Smart self-calling
+### Smart self-calling
 A tweak that makes method calls with no parameters more convenient.
 Basically, it allows doing this
 ```lua
@@ -40,7 +42,7 @@ Which equates
 local s = "Hello World"
 local r = s:reverse()
 ```
-###Assignment operators
+### Assignment operators
 Selene adds assignment operators for most operators in Lua.
 ```lua
 a += 4   -- equates 'a = a + 4 '
@@ -63,7 +65,7 @@ Having multiple operators in one term still works.
 ```lua
 a *= 4 + 7  -- equates 'a = a * 4 + 7' (mind the order of operations)
 ```
-###Wrapped tables
+### Wrapped tables
 You can use `$(t:table or string)` to turn a table or a string into a wrapped table or string to perform bulk data operations on them. If the table is a list (i.e. if every key in the table is a number valid for `ipairs`), it will automatically create a list, otherwise it will create a map.
 ```lua
 local t = {"one", "two"}
@@ -93,9 +95,9 @@ s = s.$ -- This is the third way of getting back your string or table.
 s = tostring(s) -- This is a way of getting back strings from wrapped strings.
 ```
 A note about wrapped strings: If you call `pairs` or `ipairs` with a wrapped string as a parameter, it will iterate through every character in the string.
-####What you can do with wrapped tables or strings
+#### What you can do with wrapped tables or strings
 See [the functions documentation](#functions) for methods one may call on wrapped tables or strings.
-#####Merging Wrapped Tables
+##### Merging Wrapped Tables
 You can merge maps, lists and stringlists by concatenating (`..`) them:
 ```lua
 local t1 = {a = "one", c = 4, test = "three"}
@@ -112,13 +114,13 @@ local t3 = ($(t1) .. $(t2))() -- t3 is now {1, "two", true, 4, "five", 6}
 ```
 
 You can merge any table with a map. Anything `isList` (see below) returns `true` on can be inserted into lists and stringlists can have stringlists inserted into them.
-#####Inserting values into lists
+##### Inserting values into lists
 You can insert any value into a list using the `+` operator:
 ```lua
 local t1 = {1, "two", true}
 local t2 = ($(t1) + 4)() -- t2 is now {1, "two", true, 4}
 ```
-#####String Iterators
+##### String Iterators
 There are now three different ways to iterate through the characters of a string:
 ```lua
 for index, char in ipairs($(s)) do
@@ -131,13 +133,13 @@ for index, char in $(s):iter do
   -- Here, the wrapped string's iterator function is being used.https://github.com/Vexatos/Selene#running-selene
 end
 ```
-####Utility functions for wrapped tables
+#### Utility functions for wrapped tables
  - `ltype(t:anything):string` This functions works just like `type`, just that it, if it finds a wrapped table, may return `"map"`, `"list"` or `"stringlist"`.
  - `checkType(n:number, t:anything, types:string...)` This function errors when `t` does not match any of the specified types of wrapped tables. `n` is the index of the parameter, used for a more descriptive error message. if no type is specified, it will error if `t` is not a wrapped table.
  - `lpairs(t:wrapped table)` This functions works just like `ipairs` when called with a list or wrapped string and just like `pairs` when called with anything else.
  - `isList(t:wrapped table or table):boolean` This function returns true if the table is either a list (as a wrapped table) or a normal table that can be turned into a list (i.e. if every key in the table is a number valid for `ipairs`)
 
-###Lambdas
+### Lambdas
 Lambdas are wrapped in `()` brackets and always look like `(<var1> [, var2, ...] -> <operation>)`. Alternatively to the `->` you can also use `=>`.
 ```lua
 local t = {"one", "two"}
@@ -147,14 +149,14 @@ local h = $(t):filter(s => s:find("t"))() -- Alternative: If the lambda function
 local f = (s, r -> s + r) -- f is now a function that, once executed with the parameters s and r, returns the sum of s and r.
 ```
 It will automatically be parsed into a wrapped Lua function, and, if the lambda does not contain any `return`, automatically add a `return` in the front.
-####Conditional lambda functions
+#### Conditional lambda functions
 Using the syntax `(<var1> [, var2, ...]! <condition> -> <operation>)`, you can specify a condition for the lambda function; the function will only be called if the condition is `true`.
 ```lua
 local t = $(1, 2, nil, 6)
 local g = t:map(i, s! type(s) == "number" -> i + s)()
 -- g should be {2, 4, 10} now. Without the condition, it would error trying to calculate '3 + nil'.
 ```
-####Utility functions for wrapped and normal functions
+#### Utility functions for wrapped and normal functions
  - `checkFunc(f:function, parCount:number...)` This function errors if the specified variable does not contain a function or a wrapped function. If it is a wrapped function, it will error if the amount of its parameters does not match any of the numbers given to this function.
  - `parCount(f:function, def:number or nil):number` This function errors if `f` is not a function or a wrapped function. If it is a normal function, it will return `def`. If it is a wrapped function, it will return the amount of its parameters. If it can't for some reason, it will return `def`.
  - `$f(f:function, parCount:number):wrapped function` This functions turns a normal Lua function into a wrapped function with the specified amount of parameters. This could be useful if you want to use `checkFunc` or `parCount` to depend on a specific number of parameters. You can call this wrapped function just like you can call any normal Lua function.
@@ -170,14 +172,14 @@ Furthermore, wrapped functions provide their own function `$f().applies(...)`
  local c1 = f.applies(2) -- Should return 'true'
  ```
 
-###Ternary Operators
+### Ternary Operators
 Ternary operators are wrapped in `()` brackets and always look like `(<condition> ? <trueCase> : <falseCase>)`.
 ```lua
 local a = 5
 local c = (a >= 5 ? 1 : -1) -- c should be 1 now.
 ```
 If `<condition>` is true, the first case will be returned, otherwise the second one will.
-###Foreach
+### Foreach
 Selene supports alternative syntax for foreach:
 ```lua
 local b = {"one", "two", "three"}
@@ -187,10 +189,10 @@ end
 ```
 If the table can be iterated through with `ipairs` (i.e. if every key in the table is a number valid for `ipairs`), it will choose that, otherwise it will choose `pairs`.
 
-#Functions
+# Functions
 This is a list of the functions available on wrapped tables or strings as specified [here](#syntax) as well as functions added to native libraries.
 
-###global
+### global
  - `checkArg(n:number, obj:anything, types:string...)` This function errors when `obj` does not match any of the specified types. `n` is the index of the parameter, used for a more descriptive error message.
  - `switch(o:anything, funcs:function...)` This function returns the result of the first function `f` in `funcs` which `f.applies(o)` returns `true` for.
  If the function is not a [conditional function](#conditional-lambda-functions), it will always be called (`f.applies(o)` defaults to `true`).
@@ -204,12 +206,12 @@ local r = switch(g,
 -- r should be "World" now, because the second function is the first the condition of which holds true for with this instance of g. 
  ```
 
-###bit32
+### bit32
 Firstly, Selene adds two convenient functions to the `bit32` library (these functions are not available in Lua 5.3+), called fish-or or `for`:
  - `bit32.bfor(n1:number, n2:number, n3:number):number` This functions returns the bitwise fish-or of its operands. A bit will be 1 if two out of three of the operands' bits are 1.
  - `bit32.nfor(n1:anything, n2:anything, n3:anything):boolean` This returns `true` if two out of three of the operands are not `nil` and not `false`
 
-###table
+### table
 The native `table` library got two new functions:
  - `table.shallowcopy(t:table):table` This will return a copy `t` that contains every entry `t` did contain.
  - `table.flatten(t:table):table` This will collapse one level of inner tables and merge their entries into `t`. `t` needs to be a valid list (every key in the table has to be a number valid for `ipairs`). Inner tables will only get merged if they are lists as well, tables with invalid keys will stay the way they are in the table.
@@ -220,7 +222,7 @@ The native `table` library got two new functions:
  - `table.keys(t:table):table` Returns a new table containing all the keys stored in `t`. Will be in order if `t` can be iterated through using `ipairs`.
  - `table.values(t:table):table` Returns a new table containing all the values stored in `t`. Will be in order if `t` can be iterated through using `ipairs`.
 
-###string
+### string
 These functions will not work directly called on a string, i.e. `string.drop("Hello", 2)` will work but `("Hello"):drop(2)` will not. For that, use wrapped strings.
 `function` may be a Lua function or a wrapped function (for instance a lambda).
  - `string.foreach(s:string, f:function)` This calls `f` once for every character in the string, with either the character or the index and the character as parameters.
@@ -247,7 +249,7 @@ These functions will not work directly called on a string, i.e. `string.drop("He
  - `string.split(s:string, sep:string or number or nil):list` This function splits the string whenever it encounters the specified separator, returning a list of every part of the string. If `sep` is a number, it will split the string into chunks of the specified length.
  - `string.iter(s:string)` This functions returns an iterator over the string `s`, so you can iterate through the characters of the string using `for index, char in string.iter(s) do ... end`.
 
-###Wrapped tables
+### Wrapped tables
 These are the functions you can call on wrapped tables. `$()` represents a wrapped list or map, `$l()` represents a list.
  - `$():concat(sep:string, i:number, j:number):string` This works exactly like `table.concat`.
  - `$():foreach(f:function)` This works exactly like `string.foreach`, just that it will iterate through each key/value pair in the table.
@@ -284,13 +286,13 @@ These are the functions you can call on wrapped tables. `$()` represents a wrapp
  - `$l():flatten():list` This works exactly like `table.flatten`.
  - `$l():zip(other:list or table or function):list` This will merge the other table (which has to be an ipairs-valid list) or list into itself if both lists have the same length, in the pattern `{{t1[1], t2[1]}, {t1[2], t2[2]}, ...}`. If `other` is a function or wrapped function, it will call it once per iteration and merge the returned value in the described pattern.
 
-###Wrapped strings
+### Wrapped strings
 Wrapped strings or stringslists can mostly be seen as lists and have most of the functions wrapped tables have (including `drop`, `dropwhile` and `reverse`).
 Functions they do not have are `concat`, `find`, `flatten`, `zip`, `containskey` and `flip`. All variations of `drop` and `take` will return strings, `filter`, `slice` and `reverse` will return stringlists, and they have two new functions:
  - `$s():split(sep:string or nil):list` This works exactly like `string.split`.
  - `$s():iter()` This works exactly like `string.iter`.
 
-#Running Selene
+# Running Selene
 This is an example for a Selene loader for the standard Lua interpreter. Make sure to add the folder called "selene" to some folder that exists in the package path.
 ```lua
 local selene = require("selene")
@@ -305,5 +307,5 @@ The table which `require("selene")` returns provides a few values.
  - `selene.isLoaded():boolean` Returns `true` if Selene is currently loaded.
  - `selene.parser` This is the parser object that Selene uses.
 
-#How Live Mode works
+# How Live Mode works
 If liveMode is turned on, Selene will intercept `_G.load` to parse code going through it before directing it to the actual `load` function. Since Selene is written purely in Lua, it is not possible to intercept on a lower level. If other code loading functions that do not call `load` themselves exist in your implementation, you might want to replace them with an implementation that redirects to `load` yourself, or make it call `selene.parse`. For more information, please refer to the implementation of `load` in Selene.
