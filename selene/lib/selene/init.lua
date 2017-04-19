@@ -1215,8 +1215,9 @@ end
 -- Parsing
 --------
 
-local parser = require("selene.parser")
+local parser
 local function parse(chunk, stripcomments)
+  if not parser then parser = require("selene.parser") end
   return parser.parse(chunk, stripcomments)
 end
 
@@ -1478,7 +1479,16 @@ if _selene and not _selene.isLoaded and _selene.doAutoload then
   loadSelene(_G or _ENV)
 end
 
-local selene = {}
+local selene = setmetatable({}, {
+  __index = function(sel, key)
+    if not parser and key == "parser" then
+      parser = require("selene.parser")
+      return parser
+    end
+    return sel[key]
+  end
+})
+
 selene.parser = parser
 selene.parse = parse
 selene.load = loadSelene
