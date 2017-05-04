@@ -211,7 +211,7 @@ local varPattern = "^[%a_][%w_]*$"
 local function perror(msg, lvl)
   msg = msg or "unknown error"
   lvl = lvl or 1
-  error("[Selene] error while parsing: " .. msg, lvl + 1)
+  error("[Selene] error while parsing: " .. msg, lvl)
 end
 
 local function bracket(tChunk, plus, minus, step, result, incr, start)
@@ -307,7 +307,7 @@ end
 
 local function findDollars(tChunk, i, part, line, tokenlines)
   local curr = tChunk[i + 1]
-  if curr:find("^%(") then
+  if curr:find("^[({\"']") or curr:find("^%[=*%[") then
     tChunk[i] = "_selene._new"
   elseif curr:find("^l") then
     tChunk[i] = "_selene._newList"
