@@ -64,6 +64,7 @@ s := split(",") -- equates 's = s:split(",")'
 Having multiple operators in one term still works.
 ```lua
 a *= 4 + 7  -- equates 'a = a * 4 + 7' (mind the order of operations)
+a *= (4 + 7)  -- equates 'a = a * (4 + 7)' (use parentheses for this behaviour)
 ```
 ### Wrapped tables
 You can use `$(t:table or string)` to turn a table or a string into a wrapped table or string to perform bulk data operations on them. If the table is a list (i.e. if every key in the table is a number valid for `ipairs`), it will automatically create a list, otherwise it will create a map.
@@ -76,8 +77,20 @@ local q = $("one", "two") -- You can also call this function with multiple argum
 local p = {a="one", b="two"}
 p = $(p) -- Will create a map
 
+-- These are all the same.
+local t1 = $({"one", "two"})
+local t2 = $("one", "two")
+local t3 = ${"one", "two"}
+
 local s = "Fish"
 s = $(s) -- Will create a wrapped string, you can iterate through each character just like you can using a list.
+
+-- These are all the same.
+local s1 = $("Fish")
+local s2 = $"Fish"
+local s3 = $'Fish'
+local s4 = $[[Fish]]
+local s5 = $[=[Fish]=]
 
 -- You can use $o() to force wrapping strings or other tables.
 local ws = $o(s) -- Will create a singleton list containing only s
