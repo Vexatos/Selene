@@ -279,7 +279,6 @@ smt.__tostring = smt.__call
 --------
 -- Initialization functions
 --------
-
 local function new(...)
   local t = ...
   if #{ ... } > 1 or type(t) ~= "table" then t = { ... } end
@@ -905,7 +904,6 @@ end
 --------
 -- Bulk data operations on stringlists
 --------
-
 local function strl_filter(self, f)
   checkType(1, self, "stringlist")
   checkFunc(2, f)
@@ -961,7 +959,6 @@ end
 --------
 -- Bulk data operations on strings
 --------
-
 local function wrap_emptystring(self)
   return ""
 end
@@ -1215,10 +1212,27 @@ end
 -- Parsing
 --------
 
-local parser
+local selene
+selene = setmetatable({}, {
+  __index = function(sel, key)
+    local mt = getmetatable(selene)
+    local parser = mt and mt._parser or nil
+    if parser then
+      return parser
+    elseif key == "parser" then
+      parser = require("selene.parser")
+      mt = mt or {}
+      mt._parser = parser
+      selene.parser = parser
+      setmetatable(selene, mt)
+      return parser
+    end
+    return nil
+  end
+})
+
 local function parse(chunk, stripcomments)
-  if not parser then parser = require("selene.parser") end
-  return parser.parse(chunk, stripcomments)
+  return selene.parser.parse(chunk, stripcomments)
 end
 
 --------
@@ -1479,17 +1493,6 @@ if _selene and not _selene.isLoaded and _selene.doAutoload then
   loadSelene(_G or _ENV)
 end
 
-local selene = setmetatable({}, {
-  __index = function(sel, key)
-    if not parser and key == "parser" then
-      parser = require("selene.parser")
-      return parser
-    end
-    return sel[key]
-  end
-})
-
-selene.parser = parser
 selene.parse = parse
 selene.load = loadSelene
 selene.unload = unloadSelene
