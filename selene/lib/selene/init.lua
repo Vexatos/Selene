@@ -1212,24 +1212,12 @@ end
 -- Parsing
 --------
 
-local selene
-selene = setmetatable({}, {
-  __index = function(sel, key)
-    local mt = getmetatable(selene)
-    local parser = mt and mt._parser or nil
-    if parser then
-      return parser
-    elseif key == "parser" then
-      parser = require("selene.parser")
-      mt = mt or {}
-      mt._parser = parser
-      selene.parser = parser
-      setmetatable(selene, mt)
-      return parser
-    end
-    return nil
-  end
-})
+local selene = {}
+
+do
+  local s, p = pcall(require, "selene.parser") -- This might not be possible in every environment
+  selene.parser = s and p or nil
+end
 
 local function parse(chunk, stripcomments)
   return selene.parser.parse(chunk, stripcomments)
@@ -1409,7 +1397,7 @@ local function loadSelene(env, lvMode)
   if env._selene and env._selene.liveMode then
     env._selene.oldload = env.load
     env.load = function(ld, src, mv, loadenv)
-      if env._selene and env._selene.liveMode then
+      if env._selene and env._selene.liveMode and env._selene.isLoaded then
         if type(ld) == "function" then
           local s = ""
           local nws = ld()
