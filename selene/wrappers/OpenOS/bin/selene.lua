@@ -1,6 +1,6 @@
 local shell = require("shell")
 if _G._selene and _G._selene.liveMode then
-  shell.execute("lua")
+  shell.execute("lua", ...)
 else
   local env = setmetatable({}, {__index = _ENV})
   local parser = require("selene.parser")
@@ -21,5 +21,5 @@ else
     ld = parser.parse(ld)
     return oldload(ld, src, mv, loadenv)
   end
-  shell.execute("lua", env)
+  shell.execute("lua", env, ...)
 end
