@@ -200,6 +200,9 @@ local function tokenize(value, stripcomments, utime)
     tokenlines[#tokenlines + 1] = lines
     lines = lines + 1
   end
+  for i = 1, #tokenlines do
+    if skiplines[i] == nil then skiplines[i] = false end
+  end
   return tokens, tokenlines, skiplines, utime
 end
 
@@ -265,7 +268,7 @@ local function tryAddReturn(code, stripcomments)
   return "return " .. code
 end
 
-local function findLambda(tChunk, i, part, line, tokenlines, stripcomments)
+local function findLambda(tChunk, i, part, line, tokenlines, skiplines, stripcomments)
   local params = {}
   local step = i - 1
   local inst, step = bracket(tChunk, ")", "(", step, "", -1)
@@ -299,13 +302,15 @@ local function findLambda(tChunk, i, part, line, tokenlines, stripcomments)
   for i = start, stop do
     table.remove(tChunk, start)
     table.remove(tokenlines, start)
+    table.remove(skiplines, start)
   end
   table.insert(tChunk, start, func)
   table.insert(tokenlines, start, line)
+  table.insert(skiplines, start, false)
   return start, start
 end
 
-local function findDollars(tChunk, i, part, line, tokenlines)
+local function findDollars(tChunk, i, part, line, tokenlines, skiplines)
   local curr = tChunk[i + 1]
   if curr:find("^[({\"']") or curr:find("^%[=*%[") then
     tChunk[i] = "_selene._new"
@@ -313,18 +318,22 @@ local function findDollars(tChunk, i, part, line, tokenlines)
     tChunk[i] = "_selene._newList"
     table.remove(tChunk, i + 1)
     table.remove(tokenlines, i + 1)
+    table.remove(skiplines, i + 1)
   elseif curr:find("^f") then
     tChunk[i] = "_selene._newFunc"
     table.remove(tChunk, i + 1)
     table.remove(tokenlines, i + 1)
+    table.remove(skiplines, i + 1)
   elseif curr:find("^s") then
     tChunk[i] = "_selene._newString"
     table.remove(tChunk, i + 1)
     table.remove(tokenlines, i + 1)
+    table.remove(skiplines, i + 1)
   elseif curr:find("^o") then
     tChunk[i] = "_selene._newOptional"
     table.remove(tChunk, i + 1)
     table.remove(tokenlines, i + 1)
+    table.remove(skiplines, i + 1)
   elseif tChunk[i - 1]:find("[:%.]$") then
     tChunk[i - 1] = tChunk[i - 1]:sub(1, #(tChunk[i - 1]) - 1)
     tChunk[i] = "()"
@@ -344,7 +353,7 @@ local function findSelfCall(tChunk, i, part, line)
   return false
 end
 
-local function findTernary(tChunk, i, part, line, tokenlines)
+local function findTernary(tChunk, i, part, line, tokenlines, skiplines)
   local step = i - 1
   local cond, step = bracket(tChunk, ")", "(", step, "", -1)
   local start = step
@@ -360,13 +369,15 @@ local function findTernary(tChunk, i, part, line, tokenlines)
   for i = start, stop do
     table.remove(tChunk, start)
     table.remove(tokenlines, start)
+    table.remove(skiplines, start)
   end
   table.insert(tChunk, start, ternary)
   table.insert(tokenlines, start, line)
+  table.insert(skiplines, start, false)
   return start, start
 end
 
-local function findForeach(tChunk, i, part, line, tokenlines)
+local function findForeach(tChunk, i, part, line, tokenlines, skiplines)
   local start
   local step = i - 1
   local params = {}
@@ -400,9 +411,11 @@ local function findForeach(tChunk, i, part, line, tokenlines)
   for i = start, stop do
     table.remove(tChunk, start)
     table.remove(tokenlines, start)
+    table.remove(skiplines, start)
   end
   table.insert(tChunk, start, func)
   table.insert(tokenlines, start, line)
+  table.insert(skiplines, start, false)
   return start, start
 end
 
@@ -550,7 +563,7 @@ local function parse(chunk, stripcomments)
     if keywords[part] then
       if not tChunk[i + 1] then tChunk[i + 1] = "" end
       if not tChunk[i - 1] then tChunk[i - 1] = "" end
-      local start, stop = keywords[part](tChunk, i, part, tokenlines[i], tokenlines, stripcomments)
+      local start, stop = keywords[part](tChunk, i, part, tokenlines[i], tokenlines, skiplines, stripcomments)
       if start then
         stop = stop or start
         local toInsert = {}
@@ -562,15 +575,14 @@ local function parse(chunk, stripcomments)
           end
           table.remove(tChunk, start)
           table.remove(tokenlines, start)
+          table.remove(skiplines, start)
         end
 
         for q = #toInsert, 1, -1 do
           local data = toInsert[q]
           table.insert(tChunk, start, data[1])
           table.insert(tokenlines, start, data[2])
-          if data[3] then
-            table.insert(skiplines, start, data[3])
-          end
+          table.insert(skiplines, start, data[3])
         end
         i = start - 1
       end
