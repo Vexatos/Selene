@@ -553,7 +553,6 @@ local function parse(chunk, stripcomments)
     utime = timeout.time()
   end
   local tChunk, tokenlines, skiplines, utime = tokenize(chunk, stripcomments, utime)
-  chunk = nil
   if not tChunk then
     error(tokenlines)
   end
@@ -565,6 +564,7 @@ local function parse(chunk, stripcomments)
       if not tChunk[i - 1] then tChunk[i - 1] = "" end
       local start, stop = keywords[part](tChunk, i, part, tokenlines[i], tokenlines, skiplines, stripcomments)
       if start then
+        chunk = nil
         stop = stop or start
         local toInsert = {}
         for count = start, stop do
@@ -589,7 +589,7 @@ local function parse(chunk, stripcomments)
     end
     i = i + 1
   end
-  return concatWithLines(tChunk, tokenlines, skiplines)
+  return chunk or concatWithLines(tChunk, tokenlines, skiplines)
 end
 
 function selenep.parse(chunk, stripcomments)
