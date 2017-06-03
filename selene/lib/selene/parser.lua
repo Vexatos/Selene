@@ -258,7 +258,7 @@ local function findLambda(tokens, i, part, line, stripcomments)
   local inst, step = bracket(tokens, ")", "(", step, "", -1)
 
   local cond = split(inst, "!")
-  inst = cond[1]
+  inst = cond[1] or inst
   local params = split(inst, ",")
 
   if #cond > 1 then
