@@ -350,7 +350,9 @@ local function findForeach(tokens, i, part, line)
   local step = i - 1
   local params = {}
   while not start do
-    if tokens[step][1] == "for" then
+    if not tokens[step] then
+      return false
+    elseif tokens[step][1] == "for" then
       start = step + 1
     else
       table.insert(params, 1, tokens[step][1])
@@ -362,7 +364,9 @@ local function findForeach(tokens, i, part, line)
   local stop
   local vars = {}
   while not stop do
-    if tokens[step][1] == "do" then
+    if not tokens[step] then
+      return false
+    elseif tokens[step][1] == "do" then
       stop = step - 1
     else
       vars[#vars + 1] = tokens[step][1]
@@ -525,8 +529,8 @@ local function parse(chunk, stripcomments)
   while i <= #tokens do
     local part = tokens[i][1]
     if keywords[part] then
-      if not tokens[i + 1] then tokens[i + 1] = {""} end
-      if not tokens[i - 1] then tokens[i - 1] = {""} end
+      if not tokens[i + 1] then tokens[i + 1] = {"", tokens[i][2], false} end
+      if not tokens[i - 1] then tokens[i - 1] = {"", tokens[i][2], false} end
       local start, stop = keywords[part](tokens, i, part, tokens[i][2], stripcomments)
       if start then
         chunk = nil
