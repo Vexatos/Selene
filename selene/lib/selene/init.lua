@@ -244,7 +244,7 @@ local fmt = {
     return fnc._fnc(...)
   end,
   __len = function(fnc)
-    return #fnc._fnc
+    return parCount(fnc)
   end,
   __pairs = function(fnc)
     return pairs(fnc._fnc)

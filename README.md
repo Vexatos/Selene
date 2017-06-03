@@ -160,6 +160,8 @@ local g = $(t):filter((s -> s:find("t")))()
 local h = $(t):filter(s => s:find("t"))() -- Alternative: If the lambda function is the only parameter of a function, you can omit one set of brackets.
 -- g and h should both be {"two"} now
 local f = (s, r -> s + r) -- f is now a function that, once executed with the parameters s and r, returns the sum of s and r.
+
+local c = #f -- c is now 2; the length of a wrapped function is the number of parameters it accepts.
 ```
 It will automatically be parsed into a wrapped Lua function, and, if the lambda does not contain any `return`, automatically add a `return` in the front.
 #### Conditional lambda functions
