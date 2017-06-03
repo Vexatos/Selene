@@ -143,7 +143,7 @@ for index, char in string.iter(s) do
   -- Here, string.iter is being used to give a string iterator
 end
 for index, char in $(s):iter do
-  -- Here, the wrapped string's iterator function is being used.https://github.com/Vexatos/Selene#running-selene
+  -- Here, the wrapped string's iterator function is being used.
 end
 ```
 #### Utility functions for wrapped tables
