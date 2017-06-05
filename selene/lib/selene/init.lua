@@ -69,6 +69,17 @@ local function tblType(obj)
   return type(obj)
 end
 
+local function isList_t(t)
+  local c = 0
+  for i in pairs(t) do
+    if type(i) ~= "number" or i < 1 then
+      return false, i
+    end
+    c = c + 1
+  end
+  return c == #t
+end
+
 local function isList(t)
   checkArg(1, t, "table")
   local tp = tblType(t)
@@ -77,14 +88,7 @@ local function isList(t)
   elseif tp == "map" then
     return false
   elseif tp == "table" then
-    for i in pairs(t) do
-      if type(i) ~= "number" then
-        return false
-      elseif i < 1 then
-        return false
-      end
-    end
-    return true
+    return isList_t(t)
   end
   return false
 end
@@ -331,12 +335,9 @@ end
 
 local function newList(...)
   local newObj = new(...)
-  for i in pairs(newObj._tbl) do
-    if type(i) ~= "number" then
-      error("[Selene] could not create list: bad table key: " .. i .. " is not a number", 2)
-    elseif i < 1 then
-      error("[Selene] could not create list: bad table key: " .. i .. " is below 1", 2)
-    end
+  local s, i = isList_t(newObj._tbl)
+  if not s then
+    error("[Selene] could not create list: " .. (i and "bad table key: " .. i or "table length does not match number of entries"), 2)
   end
   setmetatable(newObj, lmt)
   return newObj
@@ -344,14 +345,9 @@ end
 
 local function newListOrMap(...)
   local newObj = new(...)
-  for i in pairs(newObj._tbl) do
-    if type(i) ~= "number" then
-      return newObj
-    elseif i < 1 then
-      return newObj
-    end
+  if isList_t(newObj._tbl) then
+    setmetatable(newObj, lmt)
   end
-  setmetatable(newObj, lmt)
   return newObj
 end
 
