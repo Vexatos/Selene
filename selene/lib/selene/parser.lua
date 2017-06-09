@@ -137,6 +137,9 @@ local function tokenize(value, stripcomments, utime)
       tokens[#tokens][1] = tokens[#tokens][1] .. char
     elseif not quoted and token == "" and ((char == ">" and lambdachars[tokens[#tokens][1]]) or (char == "-" and tokens[#tokens][1] == "<")) then
       tokens[#tokens][1] = tokens[#tokens][1] .. char
+    elseif char == ">" and not quoted and lambdachars[token] then
+      table.insert(tokens, {token .. char, lines})
+      token = ""
     elseif not quoted and char == "." then
       if waiting == false and string.sub(token, #token) == "." then
         token = string.sub(token, 1, #token - 1)
