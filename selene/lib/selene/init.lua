@@ -169,10 +169,10 @@ local function checkFunc(n, have, ...)
   local level = 3
 
   local function check(want, ...)
-    checkArg(level, want, "number")
     if not want then
       return false
     else
+      checkArg(level, want, "number")
       level = level + 1
       return haveParCount == want or check(...)
     end
@@ -187,7 +187,7 @@ end
 
 local function switch(o, ...)
   for i, f in ipairs({ ... }) do
-    checkFunc(i + 1, f, 1)
+    checkFunc(i + 1, f, 1, 0)
     if type(f) == "table" then
       local fm = getmetatable(f)
       if fm and fm.applies and fm.applies(o) then

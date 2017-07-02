@@ -231,10 +231,10 @@ local function bracket(tokens, plus, minus, step, result, incr, start)
   return table.concat(res, " "), step
 end
 
-local function split(self, sep)
+local function split(self, sep, empty)
   local t = {}
   local i = 1
-  for str in self:gmatch("([^" .. sep .. "]+)") do
+  for str in self:gmatch(string.format("([^%s]%s)", sep, empty and "*" or "+")) do
     t[i] = trim(str)
     i = i + 1
   end
@@ -260,7 +260,7 @@ local function findLambda(tokens, i, part, line, stripcomments)
   local step = i - 1
   local inst, step = bracket(tokens, ")", "(", step, "", -1)
 
-  local cond = split(inst, "!")
+  local cond = split(inst, "!", true)
   inst = cond[1] or inst
   local params = split(inst, ",")
 
