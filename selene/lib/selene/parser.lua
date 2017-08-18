@@ -198,6 +198,15 @@ end
 local varPattern = "^[%a_][%w_]*$"
 --local lambdaParPattern = "("..varPattern..")((%s*,%s*)("..varPattern.."))*"
 
+local function isVar(t)
+  for str in t:gmatch("([^.]*)") do
+    if not str:find(varPattern) then
+      return false
+    end
+  end
+  return true
+end
+
 local function perror(msg, lvl)
   msg = msg or "unknown error"
   lvl = lvl or 1
@@ -391,16 +400,15 @@ local function findForeach(tokens, i, part, line)
 end
 
 local function findAssignmentOperator(tokens, i)
-  local repl = tokens[i][1]:sub(1, #tokens[i][1] - 1)
-  if tokens[i - 1][1]:find(varPattern) then
-    tokens[i][1] = " = " .. tokens[i - 1][1] .. " " .. repl
+  if isVar(tokens[i - 1][1]) then
+    tokens[i][1] = " = " .. tokens[i - 1][1] .. " " .. tokens[i][1]:sub(1, #tokens[i][1] - 1)
     return i, i
   end
   return false
 end
 
 local function findDollarAssignment(tokens, i, part, line)
-  if tokens[i - 1][1]:find(varPattern) then
+  if isVar(tokens[i - 1][1]) then
     tokens[i][1] = " = _selene._new(" .. tokens[i - 1][1] .. ")"
     return i, i
   else
