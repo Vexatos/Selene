@@ -86,11 +86,11 @@ local function isList(t)
   if tp == "list" or tp == "stringlist" then
     return true
   elseif tp == "map" then
-    return false
+    return false, -1
   elseif tp == "table" then
     return isList_t(t)
   end
-  return false
+  return false, -2
 end
 
 local function checkList(n, have)
@@ -335,9 +335,9 @@ end
 
 local function newList(...)
   local newObj = new(...)
-  local s, i = isList_t(newObj._tbl)
+  local s, i = isList(newObj._tbl)
   if not s then
-    error("[Selene] could not create list: " .. (i and "bad table key: " .. i or "table length does not match number of entries"), 2)
+    error("[Selene] could not create list: " .. (i and (i >= 0 and "bad table key: " .. i or (i == -1 and "parameter is not a list-like table" or "parameter is not a table")) or "table length does not match number of entries"), 2)
   end
   setmetatable(newObj, lmt)
   return newObj
@@ -345,7 +345,7 @@ end
 
 local function newListOrMap(...)
   local newObj = new(...)
-  if isList_t(newObj._tbl) then
+  if isList(newObj._tbl) then
     setmetatable(newObj, lmt)
   end
   return newObj
