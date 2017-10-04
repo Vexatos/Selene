@@ -21,7 +21,8 @@ local function selene_loader(path)
   return function(name)
     local env = setmetatable({}, { __index = _G })
     local source = love.filesystem.read(path)
-    local f = assert(libenv.load(libenv._selene._parse(source)))
+    local why = true
+    local f = assert(libenv.load(function() if why then why = false return libenv._selene._parse(source) else return nil end end, path, 'bt', env))
     setfenv(f, env)
     local result = f()
     if result then
@@ -42,8 +43,9 @@ local function selene_searcher(name)
 
   local fname = name:gsub("%.", "/")
 
-  for pattern in love.filesystem.getRequirePath():gmatch("[^;]+") do
+  local packagePath = love.filesystem.getRequirePath and love.filesystem.getRequirePath() or package.path
 
+  for pattern in packagePath:gmatch("[^;]+") do
     local fpath = pattern:gsub("%?", fname)
     if love.filesystem.isFile(fpath) then
       return selene_loader(fpath)
