@@ -199,7 +199,7 @@ local varPattern = "^[%a_][%w_]*$"
 --local lambdaParPattern = "("..varPattern..")((%s*,%s*)("..varPattern.."))*"
 
 local function isVar(t)
-  for str in t:gmatch("([^.]*)") do
+  for str in t:gmatch("([^.]+)") do
     if not str:find(varPattern) then
       return false
     end
