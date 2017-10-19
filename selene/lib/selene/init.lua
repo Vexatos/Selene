@@ -626,6 +626,22 @@ local function tbl_slice(self, start, stop, step)
   return wrap_rawslice(self, start, stop, step, wrap_returnselfentry, newListOrMap)
 end
 
+local function tbl_splice(self, index, ...)
+  checkType(1, self, "list", "stringlist")
+  checkArg(2, index, "number")
+  local repl = {...}
+  local spliced = shallowcopy(self._tbl)
+  if #repl == 0 then
+    table.remove(spliced, index)
+  else
+    spliced[index] = repl[1]
+    for i = 2, #repl do
+      table.insert(spliced, index + i - 1, repl[i])
+    end
+  end
+  return newList(spliced)
+end
+
 --inverts the list
 local function wrap_reverse(self, newl)
   checkType(1, self, "list", "stringlist")
@@ -694,6 +710,17 @@ local function tbl_find(self, f)
   for i, j in mpairs(self) do
     if f(parCnt(i, j)) then
       return j
+    end
+  end
+end
+
+local function tbl_index(self, f)
+  checkType(1, self, "list", "stringlist")
+  checkFunc(2, f)
+  local parCnt = checkParCnt(parCount(f, 2))
+  for i, j in mpairs(self) do
+    if f(parCnt(i, j)) then
+      return i
     end
   end
 end
@@ -1223,7 +1250,7 @@ end
 -- Adding to global variables
 --------
 
-local VERSION = "Selene 0.1.0.5"
+local VERSION = "Selene 0.1.0.6"
 
 local function patchNativeLibs(env)
   env.string.foreach = str_foreach
@@ -1290,6 +1317,7 @@ local function loadSeleneConstructs()
   _Table.takeright = tbl_takeright
   _Table.takewhile = tbl_takewhile
   _Table.slice = tbl_slice
+  _Table.splice = tbl_splice
   _Table.reverse = tbl_reverse
   _Table.flip = tbl_flip
   _Table.fold = tbl_foldleft
@@ -1299,6 +1327,7 @@ local function loadSeleneConstructs()
   _Table.reduceleft = tbl_reduceleft
   _Table.reduceright = tbl_reduceright
   _Table.find = tbl_find
+  _Table.index = tbl_index
   _Table.flatten = tbl_flatten
   _Table.zip = tbl_zip
   _Table.contains = tbl_contains

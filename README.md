@@ -287,6 +287,7 @@ These are the functions you can call on wrapped tables. `$()` represents a wrapp
  - `$():clear():list or map` This will remove every value stored in the table and return the table.
  - `$():keys():list` Returns a new list containing all the keys stored in the table. Will be in order if this is a list.
  - `$():values():list` Returns a new list containing all the values stored in the table. Will be in order if this is a list.
+ - `$l():index(f:function):number` This returns the index of the first element of the table that `f` returns `true` on.
  - `$l():drop(n:number):list` This function will remove the first `n` entries from the list and return a list with the dropped entries.
  - `$l():dropright(n:number):list` This function will remove the last `n` entries from the list and return a list with the dropped entries.
  - `$l():dropwhile(f:function):list` This works exactly like `string.dropwhile`, just that it will iterate through each key/value pair in the table and will return a list with the dropped entries.
@@ -294,6 +295,7 @@ These are the functions you can call on wrapped tables. `$()` represents a wrapp
  - `$l():takeright(n:number):list` This function will take the last `n` entries from the list and return a list with the taken entries.
  - `$l():takewhile(f:function):list` This works exactly like `string.takewhile`, just that it will iterate through each key/value pair in the table and will return a list with the taken entries.
  - `$l():slice(start:number or nil, stop:number or nil [, step:number or nil]):list` This function will slice a specific range of indices out of the list and return it, starting at index `start` and stopping at `stop` with a step size of `step`. `step` must not be 0 but can be negative. `start` will default to `1` if it is `nil` or `0`, `stop` will default to the length of the list. Negative values for `start` or `stop` are interpreted as indexing backwards, from the end of the list.
+ - `$l():splice(index:number [, replacements...]):list` This removes the item at the given index, and, if replacements are given, inserts those in place.
  - `$l():reduce(f:function):anything` This works exactly like `$l():reduceleft`.
  - `$l():reduceleft(f:function):anything` This function must not be called with an empty list. If the length of the list is `1`, it will return the only value in the list. Otherwise, this function assigns the first entry in the list to a local variable m and calls `f` for every other value in the list, with `m` and that value as parameters. The value which `f` returns will then be assigned to `m` for the next iteration. Returns the final value of `m`.
  - `$l():reduceright(f:function):anything` This works exactly like `$l():reduceleft`, just that it starts at the end of the list.
