@@ -155,13 +155,12 @@ end
 
 -- Errors if the value is not a function or does not have the required parameter count
 local function checkFunc(n, have, ...)
-  checkType(n, have, "function")
+  checkType(n, have, "function", "table")
   if type(have) == "function" then return end
   local haveParCount = parCount(have, nil)
   have = type(have)
   if not haveParCount then
-    local msg = string.format("[Selene] bad argument #%d (function expected, got %s)", n, have)
-    error(msg, 2)
+    return
   end
 
   if #{ ... } == 0 then return end
