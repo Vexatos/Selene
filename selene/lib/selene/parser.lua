@@ -318,7 +318,7 @@ local function findDollars(tokens, i, part, line)
   elseif curr:find("^o") then
     tokens[i][1] = "_selene._newOptional"
     table.remove(tokens, i + 1)
-  elseif tokens[i - 1]:find("[:%.]$") then
+  elseif tokens[i - 1][1] and tokens[i - 1][1]:find("[:%.]$") then
     tokens[i - 1][1] = tokens[i - 1][1]:sub(1, #(tokens[i - 1][1]) - 1)
     tokens[i][1] = "()"
     return i - 1, i
@@ -400,7 +400,7 @@ local function findForeach(tokens, i, part, line)
 end
 
 local function findAssignmentOperator(tokens, i)
-  if isVar(tokens[i - 1][1]) then
+  if tokens[i - 1][1] and isVar(tokens[i - 1][1]) then
     tokens[i][1] = " = " .. tokens[i - 1][1] .. " " .. tokens[i][1]:sub(1, #tokens[i][1] - 1)
     return i, i
   end
@@ -408,7 +408,7 @@ local function findAssignmentOperator(tokens, i)
 end
 
 local function findDollarAssignment(tokens, i, part, line)
-  if isVar(tokens[i - 1][1]) then
+  if tokens[i - 1][1] and isVar(tokens[i - 1][1]) then
     tokens[i][1] = " = _selene._new(" .. tokens[i - 1][1] .. ")"
     return i, i
   else

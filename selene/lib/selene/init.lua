@@ -1249,7 +1249,7 @@ end
 -- Adding to global variables
 --------
 
-local VERSION = "Selene 0.1.0.6"
+local VERSION = "Selene 0.1.0.7"
 
 local function patchNativeLibs(env)
   env.string.foreach = str_foreach
