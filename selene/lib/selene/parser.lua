@@ -290,8 +290,8 @@ local function findLambda(tokens, i, part, line, stripcomments)
     funcode = tryAddReturn(funcode, stripcomments)
   end
   for _, s in ipairs(params) do
-    if not s:find(varPattern) then
-      perror("invalid lambda at index " .. i .. " (line " .. line .. "): invalid parameters: " .. table.concat(params, ","))
+    if not (s:find(varPattern) or s == "...") then
+      perror("invalid lambda at index " .. i .. " (line " .. line .. "): invalid parameters: " .. table.concat(params, ",") .. " - parameter " .. s)
     end
   end
   local func = string.format("(_selene._newFunc(function(%s) %s end, %d, %s))", table.concat(params, ","), funcode, #params, cond)
