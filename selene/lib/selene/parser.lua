@@ -304,7 +304,11 @@ end
 
 local function findDollars(tokens, i, part, line)
   local curr = tokens[i + 1][1]
-  if curr:find("^[({\"']") or curr:find("^%[=*%[") then
+  if tokens[i - 1][1] and tokens[i - 1][1]:find("[:%.]$") then
+    tokens[i - 1][1] = tokens[i - 1][1]:sub(1, #(tokens[i - 1][1]) - 1)
+    tokens[i][1] = "()"
+    return i - 1, i
+  elseif curr:find("^[({\"']") or curr:find("^%[=*%[") then
     tokens[i][1] = "_selene._new"
   elseif curr:find("^l") then
     tokens[i][1] = "_selene._newList"
@@ -318,10 +322,6 @@ local function findDollars(tokens, i, part, line)
   elseif curr:find("^o") then
     tokens[i][1] = "_selene._newOptional"
     table.remove(tokens, i + 1)
-  elseif tokens[i - 1][1] and tokens[i - 1][1]:find("[:%.]$") then
-    tokens[i - 1][1] = tokens[i - 1][1]:sub(1, #(tokens[i - 1][1]) - 1)
-    tokens[i][1] = "()"
-    return i - 1, i
   else
     perror("invalid $ at index " .. i .. " (line " .. line .. ")")
   end
