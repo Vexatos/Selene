@@ -322,6 +322,9 @@ local function findDollars(tokens, i, part, line)
   elseif curr:find("^o") then
     tokens[i][1] = "_selene._newOptional"
     table.remove(tokens, i + 1)
+  elseif curr:find("^i") then
+    tokens[i][1] = "_selene._newIterable"
+    table.remove(tokens, i + 1)
   else
     perror("invalid $ at index " .. i .. " (line " .. line .. ")")
   end

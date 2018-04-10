@@ -14,6 +14,7 @@ This is a Lua library I made for more convenient functional programming. It prov
         - [Inserting values into lists](#inserting-values-into-lists)
         - [String iterators](#string-iterators)
       - [Utility functions for wrapped tables](#utility-functions-for-wrapped-tables)
+    - [Iterables](#iterables)
     - [Lambdas](#lambdas)
       - [Conditional lambda functions](#conditional-lambda-functions)
       - [Utility functions for wrapped and normal functions](#utility-functions-for-wrapped-and-normal-functions)
@@ -152,6 +153,37 @@ end
  - `lpairs(t:wrapped table)` This functions works just like `ipairs` when called with a list or wrapped string and just like `pairs` when called with anything else.
  - `isList(t:wrapped table or table):boolean` This function returns true if the table is either a list (as a wrapped table) or a normal table that can be turned into a list (i.e. if every key in the table is a number valid for `ipairs`)
 
+### Iterables
+Iterables are objects that wrap a function to iterate over: The only parameter they take is a function that takes the current iteration index (or no parameter) and returns a value each time it is called, and nil when there is no new value left to return. Most of the [methods that can be called on wrapped tables](#wrapped-tables-1) can also be called on iterables.
+
+```lua
+local function supply(index)
+  if index <= 10 then
+    return index * index
+  end
+end
+
+local itr = $(supply) -- Initializing an iterable for an existing function.
+
+for i, j in pairs(itr) do -- This calls the function until it returns nil, starting with an iteration index of 1, and provides the iteration index and value.
+  print(i, j)             -- In this case, the first ten squares of natural numbers are printed.
+end
+
+local itr2 = $(i -> i <= 10 and i*i or nil) -- Iterables can also be initialized using lambda functions.
+
+for val in itr2 do -- This iterates through the iterable, only providing the value.
+  print(val)
+end
+
+local itr3 = $( -> switch(math.random(0, 9),
+  (val! val >= 3 -> val)
+)) -- Of course, the supplier function does not have to use the index parameter.
+
+for i, j <- itr3 do -- Selene's for loop syntax works as well.
+  print(val)
+end
+```
+
 ### Lambdas
 Lambdas are wrapped in `()` brackets and always look like `(<var1> [, var2, ...] -> <operation>)`. Alternatively to the `->` you can also use `=>`.
 ```lua
@@ -265,7 +297,7 @@ These functions will not work directly called on a string, i.e. `string.drop("He
  - `string.iter(s:string)` This functions returns an iterator over the string `s`, so you can iterate through the characters of the string using `for index, char in string.iter(s) do ... end`.
 
 ### Wrapped tables
-These are the functions you can call on wrapped tables. `$()` represents a wrapped list or map, `$l()` represents a list.
+These are the functions you can call on wrapped tables. `$()` represents a wrapped list or map, `$l()` represents a list, `$i()` represents an iterable.
  - `$():concat(sep:string, i:number, j:number):string` This works exactly like `table.concat`.
  - `$():foreach(f:function)` This works exactly like `string.foreach`, just that it will iterate through each key/value pair in the table.
  - `$():map(f:function):list or map` This works exactly like `string.map`, just that it will iterate through each key/value pair in the table.
@@ -302,6 +334,7 @@ These are the functions you can call on wrapped tables. `$()` represents a wrapp
  - `$l():reverse():list` This function will invert the list so that the last entry will be the first one etc.
  - `$l():flatten():list` This works exactly like `table.flatten`.
  - `$l():zip(other:list or table or function):list` This will merge the other table (which has to be an ipairs-valid list) or list into itself if both lists have the same length, in the pattern `{{t1[1], t2[1]}, {t1[2], t2[2]}, ...}`. If `other` is a function or wrapped function, it will call it once per iteration and merge the returned value in the described pattern.
+ - `$i():collect():list` This function will iterate through the iterable and add every returned element to a list which it will return.
 
 ### Wrapped strings
 Wrapped strings or stringslists can mostly be seen as lists and have most of the functions wrapped tables have (including `drop`, `dropwhile` and `reverse`).
