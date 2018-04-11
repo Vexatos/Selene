@@ -189,8 +189,7 @@ local function switch(o, ...)
   for i, f in ipairs({ ... }) do
     checkFunc(i + 1, f, 1, 0)
     if type(f) == "table" then
-      local fm = getmetatable(f)
-      if fm and fm.applies and fm.applies(o) then
+      if f.applies and f.applies(o) then
         return f._fnc(o)
       end
     else
@@ -243,8 +242,7 @@ local function truef() return true end
 
 local fmt = {
   __call = function(fnc, ...)
-    local fm = getmetatable(fnc)
-    if fm.applies and not fm.applies(...) then return end
+    if fnc.applies and not fnc.applies(...) then return end
     return fnc._fnc(...)
   end,
   __len = function(fnc)
@@ -269,6 +267,16 @@ local fmt = {
   __newindex = mt.__newindex,
   ltype = "function"
 }
+
+local cfmt = shallowcopy(fmt)
+cfmt.__call = function(fnc, ...)
+  local fm = getmetatable(fnc)
+  for i, f in ipairs(fm._cfnc) do
+    if f[1](...) then
+      return f[2](...)
+    end
+  end
+end
 
 local _Table = {}
 local _String = {}
@@ -397,7 +405,7 @@ local function newFunc(f, parCnt, applies)
   local newF = {}
   local fm = shallowcopy(fmt)
   newF._fnc = f
-  fm.applies = applies
+  newF.applies = applies
   fm.parCount = parCnt
   setmetatable(newF, fm)
   return newF
@@ -484,6 +492,59 @@ lmt.__add = function(first, second)
     error(string.format("[Selene] attempt to add %s and %s (cannot insert %s into %s)",
       fType, sType, sType, fType), 2)
   end
+end
+
+fmt.__add = function(first, second)
+  if type(first) == "table" and type(second) == "table" then
+    local fm = getmetatable(first)
+    local sm = getmetatable(second)
+    if(fm and fm.ltype == "function" and sm and sm.ltype == "function") then
+      local funcs = {}
+      local pc
+      local function insert(p, t)
+        if not pc or pc == p then
+          table.insert(funcs, t)
+          pc = pc or p
+        else
+          error(string.format("[Selene] attempt to create composite function out of functions with different parameter counts %s and %s",
+            pc, p), 3)
+        end
+      end
+      if fm._cfnc then
+        for i, f in ipairs(fm._cfnc) do
+          insert(fm.parCount, f)
+        end
+      else
+        insert(fm.parCount, {first.applies, first._fnc})
+      end
+      if sm._cfnc then
+        for i, f in ipairs(sm._cfnc) do
+          insert(sm.parCount, f)
+        end
+      else
+        insert(sm.parCount, {second.applies, second._fnc})
+      end
+      local newC = {}
+      local cm = shallowcopy(cfmt)
+      cm._cfnc = funcs
+      newC.applies = function(...)
+        for i, f in ipairs(cm._cfnc) do
+          if f[1](...) then
+            return true
+          end
+        end
+        return false
+      end
+      newC._fnc = function(...)
+        return newC(...)
+      end
+      cm.parCount = pc
+      setmetatable(newC, cm)
+      return newC
+    end
+  end
+  error(string.format("[Selene] attempt to create composite function out of %s and %s",
+    tblType(first), tblType(second)), 2)
 end
 
 --------

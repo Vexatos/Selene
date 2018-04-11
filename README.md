@@ -17,6 +17,7 @@ This is a Lua library I made for more convenient functional programming. It prov
     - [Iterables](#iterables)
     - [Lambdas](#lambdas)
       - [Conditional lambda functions](#conditional-lambda-functions)
+      - [Composite functions](#composite-functions)
       - [Utility functions for wrapped and normal functions](#utility-functions-for-wrapped-and-normal-functions)
     - [Ternary Operators](#ternary-operators)
     - [Foreach](#foreach)
@@ -203,6 +204,22 @@ local t = $(1, 2, nil, 6)
 local g = t:map(i, s! type(s) == "number" -> i + s)()
 -- g should be {2, 4, 10} now. Without the condition, it would error trying to calculate '3 + nil'.
 ```
+
+#### Composite functions
+Conditional functions can be added together to create a composite function. Calling this function will return the result of the first function `f` which `f.applies(...)` returns `true` for.
+
+```lua
+local f1 = (a! a < 4 -> 4)
+local f2 = (a! a < 8 -> 8)
+local f3 = (a! a < 10 -> 10)
+
+local fc = f1 + f2 + f3
+
+for i = 1,10 do
+  print(fc(i) or "nothing")
+end
+```
+
 #### Utility functions for wrapped and normal functions
  - `checkFunc(f:function, parCount:number...)` This function errors if the specified variable does not contain a function or a wrapped function. If it is a wrapped function, it will error if the amount of its parameters does not match any of the numbers given to this function.
  - `parCount(f:function, def:number or nil):number` This function errors if `f` is not a function or a wrapped function. If it is a normal function, it will return `def`. If it is a wrapped function, it will return the amount of its parameters. If it can't for some reason, it will return `def`.
