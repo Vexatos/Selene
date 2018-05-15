@@ -388,13 +388,12 @@ local function findForeach(tokens, i, part, line)
       step = step + 1
     end
   end
-  vars = split(table.concat(vars), ",")
   for _, p in ipairs(params) do
     if not p:find(varPattern) then
       return false
     end
   end
-  local func = string.format("%s in lpairs(%s)", table.concat(params, ","), table.concat(vars, ","))
+  local func = string.format("%s in lpairs(%s)", table.concat(params, ","), table.concat(vars, " "))
   for i = start, stop do
     table.remove(tokens, start)
   end
