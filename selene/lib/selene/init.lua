@@ -1002,6 +1002,30 @@ local function itr_collect(self)
   return newListOrMap(collected)
 end
 
+local function itr_drop(self, amt)
+  amt = math.max(amt, 0)
+  for i = 1, amt do
+    if self() == nil then
+      break
+    end
+  end
+  return self
+end
+
+local function itr_take(self, amt)
+  local taken = {}
+  amt = math.max(amt, 0)
+  for i = 1, amt do
+    local next = self()
+    if next == nil then
+      break
+    else
+      insert(taken, false, next)
+    end
+  end
+  return newListOrMap(taken)
+end
+
 -- for the actual table library
 
 local function tbl_range(start, stop, step)
@@ -1477,6 +1501,8 @@ local function loadSeleneConstructs()
 
   _Iterable = shallowcopy(_Table)
   _Iterable.collect = itr_collect
+  _Iterable.drop = itr_drop
+  _Iterable.take = itr_take
 
   _String.foreach = tbl_foreach
   _String.map = tbl_map

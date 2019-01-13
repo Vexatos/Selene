@@ -155,7 +155,7 @@ end
  - `isList(t:wrapped table or table):boolean` This function returns true if the table is either a list (as a wrapped table) or a normal table that can be turned into a list (i.e. if every key in the table is a number valid for `ipairs`)
 
 ### Iterables
-Iterables are objects that wrap a function to iterate over: The only parameter they take is a function that takes the current iteration index (or no parameter) and returns a value each time it is called, and nil when there is no new value left to return. Most of the [methods that can be called on wrapped tables](#wrapped-tables-1) can also be called on iterables.
+Iterables are objects that wrap a function to iterate over: The only parameter they take is a function that takes the current iteration index (or no parameter) and returns a value each time it is called, and nil when there is no new value left to return. Most of the [methods that can be called on wrapped tables](#wrapped-tables-1) can also be called on iterables. Iterables, by nature, are not immutable, and calling those functions will change the iterable's state.
 
 ```lua
 local function supply(index)
