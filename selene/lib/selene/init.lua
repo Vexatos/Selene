@@ -238,6 +238,9 @@ lmt.__ipairs = function(tbl)
   end, tbl, 0
 end
 
+local mdmt = shallowcopy(lmt)
+mdmt.ltype = "array"
+
 local function truef() return true end
 
 local fmt = {
@@ -281,6 +284,7 @@ end
 local _Table = {}
 local _String = {}
 local _Iterable = {}
+local _Array = {}
 
 local smt = shallowcopy(mt)
 smt.ltype = "stringlist"
@@ -1417,24 +1421,6 @@ end
 -- Maths
 --------
 
-local function mod1(x, y)
-  local m = x % y
-  return m == 0 and y or m
-end
-
-local function fld(x, y)
-  return math.floor(x / y)
-end
-
-local function fld1(x, y)
-  return fld(x + y - mod1(x, y), y)
-end
-
-local _Array = {}
-
-local mdmt = shallowcopy(lmt)
-mdmt.ltype = "array"
-
 --------
 -- Constructing arrays
 --------
@@ -1587,7 +1573,7 @@ end
 
 mdmt.__newindex = function(tbl, key, val)
   if type(key) == "table" then
-    if #key > #tbl._size then
+    if #key ~= #tbl._size then
       error(string.format("[Selene] attempt to index %d dimensions of %d-dimensional array.", #key, tbl._dims), 2)
     end
     local i, m = 0, 1
@@ -1842,6 +1828,10 @@ local function loadSeleneConstructs()
   _Table.switch = function(self, ...)
     checkType(1, self, allMaps)
     return switch(self, ...)
+  end
+
+  _Table.len = function(self)
+    return #self._tbl
   end
 
   _Array.dims = arr_dims
