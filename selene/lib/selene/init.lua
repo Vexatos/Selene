@@ -83,7 +83,7 @@ end
 local function isList(t)
   checkArg(1, t, "table")
   local tp = tblType(t)
-  if tp == "list" or tp == "stringlist" then
+  if tp == "list" or tp == "stringlist" or tp == "array" then
     return true
   elseif tp == "map" then
     return false, -1
@@ -132,8 +132,8 @@ local function lpairs(obj)
 end
 
 local allMaps = { "map", "list", "stringlist" }
-local allIterables = { "map", "list", "stringlist", "iterable" }
-local allIndexables = {"list", "stringlist", "iterable"}
+local allIterables = { "map", "list", "stringlist", "iterable", "array" }
+local allIndexables = {"list", "stringlist", "iterable", "array" }
 
 -- Errors if the value is not a valid type (list or map)
 local function checkType(n, have, ...)
@@ -494,6 +494,18 @@ lmt.__add = function(first, second)
   end
 end
 
+lmt.__index = function(tbl, key)
+  if type(key) == "table" then
+    local r = {}
+    for i = key[1], key[2] do
+      table.insert(r, tbl._tbl[i])
+    end
+    return newListOrMap(r)
+  else
+    return tbl._tbl[key]
+  end
+end
+
 fmt.__add = function(first, second)
   if type(first) == "table" and type(second) == "table" then
     local fm = getmetatable(first)
@@ -621,13 +633,11 @@ end
 
 -- Only returns the characters that match the filter, returns a list if possible, a map otherwise
 local function tbl_filter(self, f)
-  checkType(1, self, "map", "list")
+  checkType(1, self, "map", "list", "array")
   checkFunc(2, f)
   local list = false
-  do
-    if tblType(self) == "list" then
-      list = true
-    end
+  if isList(self) then
+    list = true
   end
   local filtered = {}
   local parCnt = checkParCnt(parCount(f, 2))
@@ -663,7 +673,7 @@ local function wrap_handleDropReturn(self, amt, wrap, whenzero, whenall, normal)
 end
 
 local function wrap_dropOrTake(self, amt, wrap, whenzero, whenall)
-  checkType(1, self, "list", "stringlist")
+  checkType(1, self, "list", "stringlist", "array")
   checkArg(2, amt, "number")
   amt = clamp(amt, 0, #self)
   return wrap_handleDropReturn(self, amt, wrap, whenzero, whenall, wrap_tableDropReturn)
@@ -691,7 +701,7 @@ end
 
 -- Removes entries while the function returns true, returns a list
 local function wrap_dropOrTakeWhile(self, f, wrap, whenzero, whenall)
-  checkType(1, self, "list", "stringlist")
+  checkType(1, self, "list", "stringlist", "array")
   checkFunc(2, f)
   local parCnt = checkParCnt(parCount(f, 2))
   local curr = 0
@@ -734,12 +744,12 @@ local function wrap_returnselfentry(self, i)
 end
 
 local function tbl_slice(self, start, stop, step)
-  checkType(1, self, "list", "stringlist")
+  checkType(1, self, "list", "stringlist", "array")
   return wrap_rawslice(self, start, stop, step, wrap_returnselfentry, newListOrMap)
 end
 
 local function tbl_splice(self, index, ...)
-  checkType(1, self, "list", "stringlist")
+  checkType(1, self, "list", "stringlist", "array")
   checkArg(2, index, "number")
   local repl = {...}
   local spliced = shallowcopy(self._tbl)
@@ -756,7 +766,7 @@ end
 
 --inverts the list
 local function wrap_reverse(self, newl)
-  checkType(1, self, "list", "stringlist")
+  checkType(1, self, "list", "stringlist", "array")
   local reversed = {}
   for i, j in mpairs(self) do
     table.insert(reversed, 1, j)
@@ -798,7 +808,7 @@ local function tbl_foldright(self, start, f)
 end
 
 local function tbl_reduceleft(self, f)
-  checkType(1, self, "list", "stringlist", "iterable")
+  checkType(1, self, "list", "stringlist", "iterable", "array")
   checkFunc(2, f)
   local d = false
   local m
@@ -1036,6 +1046,14 @@ local function tbl_range(start, stop, step)
   local nT = {}
   for i = start, stop, step do
     table.insert(nT, i)
+  end
+  return nT
+end
+
+local function tbl_rep(val, amt)
+  local nT = {}
+  for i = 1, amt do
+    nT[i] = val
   end
   return nT
 end
@@ -1396,6 +1414,331 @@ local function parse(chunk, stripcomments)
 end
 
 --------
+-- Maths
+--------
+
+local function mod1(x, y)
+  local m = x % y
+  return m == 0 and y or m
+end
+
+local function fld(x, y)
+  return math.floor(x / y)
+end
+
+local function fld1(x, y)
+  return fld(x + y - mod1(x, y), y)
+end
+
+local _Array = {}
+
+local mdmt = shallowcopy(lmt)
+mdmt.ltype = "array"
+
+--------
+-- Constructing arrays
+--------
+
+local function newArray(tbl, size, len)
+  if not len then
+    len = 1
+    for i = 1, #size do
+      len = len * size[i]
+    end
+  end
+  if len ~= #tbl then
+    error(string.format("[Selene] attempt to reshape table of length %d into array of size (%s).", #tbl, table.concat(size, ", ")), 2)
+  end
+  local newObj = {}
+  for i, j in pairs(_Table) do
+    newObj[i] = j
+  end
+  for i, j in pairs(_Array) do
+    newObj[i] = j
+  end
+  newObj._tbl = tbl
+  setmetatable(newObj, mdmt)
+  newObj._size = size
+  return newObj
+end
+
+local function fillArray(val, size)
+  local len = 1
+  for i = 1, #size do
+    len = len * size[i]
+  end
+  return newArray(tbl_rep(val, len), size, len)
+end
+
+--------
+-- array operators
+--------
+
+local function allEqual(first, second)
+  if #first ~= #second then
+    return false
+  end
+  for i = 1, #first do
+    if first[i] ~= second[i] then
+      return false
+    end
+  end
+  return true
+end
+
+local function checkSize(first, second)
+  if not allEqual(first._size, second._size) then
+    error(string.format("[Selene] attempt to do arithmetic between %d-dimensional and %d-dimensional array.", #first._size, #second._size), 3)
+  end
+end
+
+local function posToIndex(pos, size)
+  local i, m = 0, 1
+  for ki = 1, #pos do
+    i = i + ((pos[ki] - 1) * m)
+    m = m * size[ki]
+  end
+  return i + 1
+end
+
+local function op_addToRes(tbl, c, r)
+  table.insert(r, tbl[posToIndex(c, tbl._size)])
+end
+
+local function op_setIndex(tbl, c, val)
+  tbl[posToIndex(c, tbl._size)] = val
+end
+
+local function sliceIndexOp(tbl, key, val, op)
+  local c, starts, ends = {}, {}, {}
+  for i = 1, #key do
+    if type(key[i]) == "table" then
+      if key[i][1] > key[i][2] or key[i][1] < 1 or key[i][2] > tbl._size[i] then
+        error(string.format("[Selene] attempt to index array of size %d in dimension %d at range %d:%d.", tbl._size[i], i, key[i][1], key[i][2]), 3)
+      end
+      c[i] = key[i][1]
+      starts[i] = key[i][1]
+      ends[i] = key[i][2]
+    else
+      c[i] = key[i]
+      starts[i] = key[i]
+      ends[i] = key[i]
+    end
+  end
+  op(tbl, c, val)
+  repeat
+    for i = 1, #c do
+      if c[i] < ends[i] then
+        c[i] = c[i] + 1
+        op(tbl, c, val)
+        break
+      else
+        c[i] = starts[i]
+      end
+    end
+    local endreached = true
+    for i = 1, #c do
+      if c[i] ~= ends[i] then
+        endreached = false
+        break
+      end
+    end
+  until endreached
+end
+
+local function sliceIndex(tbl, key)
+  local r, s = {}, {}
+
+  sliceIndexOp(tbl, key, r, op_addToRes)
+
+  for i = 1, #key do
+    if type(key[i]) == "table" then
+      s[i] = key[i][2] - key[i][1] + 1
+    else
+      s[i] = 1
+    end
+  end
+
+  return newArray(r, s)
+end
+
+local function sliceSetIndex(tbl, key, val)
+  sliceIndexOp(tbl, key, val, op_setIndex)
+end
+
+mdmt.__index = function(tbl, key)
+  if type(key) == "table" then
+    if #key ~= #tbl._size then
+      error(string.format("[Selene] attempt to index %d dimensions of %d-dimensional array.", #key, #tbl._size), 2)
+    end
+    local i, m = 0, 1
+    for ki = 1, #key do
+      if type(key[ki]) == "table" then
+        return sliceIndex(tbl, key)
+      end
+      i = i + ((key[ki] - 1) * m)
+      m = m * tbl._size[ki]
+    end
+    return tbl._tbl[i + 1]
+  else
+    return tbl._tbl[key]
+  end
+end
+
+mdmt.__newindex = function(tbl, key, val)
+  if type(key) == "table" then
+    if #key > #tbl._size then
+      error(string.format("[Selene] attempt to index %d dimensions of %d-dimensional array.", #key, tbl._dims), 2)
+    end
+    local i, m = 0, 1
+    for ki = 1, #key do
+      if type(key[ki]) == "table" then
+        return sliceSetIndex(tbl, key, val)
+      end
+      i = i + ((key[ki] - 1) * m)
+      m = m * tbl._size[ki]
+      if not t then
+        error(string.format("[Selene] attempt to access index %d of array with length %d in dimension %d.", key[ki], #t, ki), 2)
+      end
+    end
+    tbl._tbl[i + 1] = val
+  else
+    tbl._tbl[key] = val
+  end
+end
+
+mdmt.__eq = function(first, second)
+  local fType, sType = tblType(first), tblType(second)
+  if fType ~= "array" or sType ~= "array" then
+    error(string.format("[Selene] attempt to compare %s and %s", fType, sType), 3)
+  end
+  return allEqual(first._size, second._size) and allEqual(first._tbl, second._tbl)
+end
+
+local function op_add(a, b)
+  return a + b
+end
+
+local function op_mul(a, b)
+  return a * b
+end
+
+local function op_sub(a, b)
+  return a - b
+end
+
+local function op_div(a, b)
+  return a / b
+end
+
+local function op_mod(a, b)
+  return a % b
+end
+
+local function opAN(tbl, n, op)
+  local r = {}
+  for i = 1, #tbl do
+    r[i] = op(tbl[i], n)
+  end
+  return newArray(r, tbl._size)
+end
+
+local function opAA(first, second, op)
+  checkSize(first, second)
+  local r = {}
+  for i = 1, #first do
+    r[i] = op(first[i], second[i])
+  end
+  return newArray(r, first._size)
+end
+
+local function opAerr(fType, sType, op)
+  error(string.format("[Selene] attempt to %s %s and %s", op, fType, sType), 3)
+end
+
+mdmt.__add = function(first, second)
+  local fType, sType = tblType(first), tblType(second)
+  if fType == "array" and sType == "array" then
+    return opAA(first, second, op_add)
+  elseif fType == "number" and sType == "array" then
+    return opAN(second, first, op_add)
+  elseif fType == "array" and sType == "number" then
+    return opAN(first, second, op_add)
+  else
+    opAerr(fType, sType, "add")
+  end
+end
+
+mdmt.__mul = function(first, second)
+  local fType, sType = tblType(first), tblType(second)
+  if fType == "number" and sType == "array" then
+    return opAN(second, first, op_mul)
+  elseif fType == "array" and sType == "number" then
+    return opAN(first, second, op_mul)
+  else
+    opAerr(fType, sType, "multiply")
+  end
+end
+
+mdmt.__sub = function(first, second)
+  local fType, sType = tblType(first), tblType(second)
+  if fType == "array" and sType == "array" then
+    return opAA(first, second, op_sub)
+  elseif fType == "array" and sType == "number" then
+    return opAN(first, second, op_sub)
+  else
+    opAerr(fType, sType, "subtract")
+  end
+end
+
+mdmt.__div = function(first, second)
+  local fType, sType = tblType(first), tblType(second)
+  if fType == "array" and sType == "number" then
+    return opAN(first, second, op_div)
+  else
+    opAerr(fType, sType, "divide")
+  end
+end
+
+mdmt.__mod = function(first, second)
+  local fType, sType = tblType(first), tblType(second)
+  if fType == "array" and sType == "number" then
+    return opAN(first, second, op_mod)
+  else
+    opAerr(fType, sType, "divide")
+  end
+end
+
+mdmt.__pow = function(first, second)
+  local fType, sType = tblType(first), tblType(second)
+  if fType == "array" and sType == "number" then
+    return opAN(first, second, op_mod)
+  else
+    opAerr(fType, sType, "calculate power of")
+  end
+end
+
+mdmt.__unm = function(arr)
+  local r = {}
+  for i = 1, #arr do
+    r[i] = -arr[i]
+  end
+  return newArray(r, arr._size)
+end
+
+--------
+-- Operations on arrays
+--------
+
+local function arr_size(self)
+  return table.unpack(self._size)
+end
+
+local function arr_dims(self)
+  return #self._size
+end
+
+--------
 -- Adding to global variables
 --------
 
@@ -1432,6 +1775,7 @@ local function patchNativeLibs(env)
     return rawflatten(tbl)
   end
   env.table.range = tbl_range
+  env.table.rep = tbl_rep
   env.table.flip = function(tbl)
     checkArg(1, tbl, "table")
     return rawflip(tbl)
@@ -1446,6 +1790,7 @@ local function patchNativeLibs(env)
     checkArg(1, tbl, "table")
     return rawvalues(tbl)
   end
+  env.table.filled = fillArray
 
   if env.bit32 then
     env.bit32.bfor = bfor
@@ -1498,6 +1843,9 @@ local function loadSeleneConstructs()
     checkType(1, self, allMaps)
     return switch(self, ...)
   end
+
+  _Array.dims = arr_dims
+  _Array.size = arr_size
 
   _Iterable = shallowcopy(_Table)
   _Iterable.collect = itr_collect
@@ -1558,6 +1906,7 @@ local function loadSelene(env, lvMode)
   end
   env._selene._newString = newString
   env._selene._newList = newList
+  env._selene._newArray = newArray
   env._selene._newFunc = newFunc
   env._selene._newIterable = newIterable
   env._selene._newOptional = newOptional
@@ -1644,11 +1993,13 @@ local function unloadSelene(env)
   env.table.shallowcopy = nil
   env.table.flatten = nil
   env.table.range = nil
+  env.table.rep = nil
   env.table.flip = nil
   env.table.zipped = nil
   env.table.clear = nil
   env.table.keys = nil
   env.table.values = nil
+  env.table.filled = nil
 
   if env.bit32 then
     env.bit32.bfor = nil

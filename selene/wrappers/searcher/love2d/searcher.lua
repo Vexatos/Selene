@@ -45,7 +45,7 @@ local function selene_searcher(name)
   for pattern in love.filesystem.getRequirePath():gmatch("[^;]+") do
 
     local fpath = pattern:gsub("%?", fname)
-    if love.filesystem.isFile(fpath) then
+    if love.filesystem.getInfo(fpath, "file") then
       return selene_loader(fpath)
     else
       table.insert(_errors, "\tno file '" .. fpath .. "'")
