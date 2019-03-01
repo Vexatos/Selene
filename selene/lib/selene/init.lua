@@ -1583,8 +1583,8 @@ mdmt.__newindex = function(tbl, key, val)
       end
       i = i + ((key[ki] - 1) * m)
       m = m * tbl._size[ki]
-      if not t then
-        error(string.format("[Selene] attempt to access index %d of array with length %d in dimension %d.", key[ki], #t, ki), 2)
+      if key[ki] > tbl._size[ki] then
+        error(string.format("[Selene] attempt to access index %d of array with length %d in dimension %d.", key[ki], tbl._size[ki], ki), 2)
       end
     end
     tbl._tbl[i + 1] = val
