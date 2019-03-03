@@ -1487,8 +1487,8 @@ local function posToIndex(pos, size)
   return i + 1
 end
 
-local function op_addToRes(tbl, c, r)
-  table.insert(r, tbl[posToIndex(c, tbl._size)])
+local function op_addToRes(tbl, c, r, i)
+  r[i] = tbl[posToIndex(c, tbl._size)]
 end
 
 local function op_setIndex(tbl, c, val)
@@ -1511,12 +1511,14 @@ local function sliceIndexOp(tbl, key, val, op)
       ends[i] = key[i]
     end
   end
-  op(tbl, c, val)
+  op(tbl, c, val, 1)
+  local newI = 2
   repeat
     for i = 1, #c do
       if c[i] < ends[i] then
         c[i] = c[i] + 1
-        op(tbl, c, val)
+        op(tbl, c, val, newI)
+        newI = newI + 1
         break
       else
         c[i] = starts[i]
@@ -1550,6 +1552,14 @@ end
 
 local function sliceSetIndex(tbl, key, val)
   sliceIndexOp(tbl, key, val, op_setIndex)
+end
+
+mdmt.__len = function(tbl)
+  local r = 1
+  for _, s in ipairs(tbl._size) do
+    r = r * s
+  end
+  return r
 end
 
 mdmt.__index = function(tbl, key)
