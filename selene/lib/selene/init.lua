@@ -1762,12 +1762,11 @@ local function arr_dims(self)
   return #self._size
 end
 
-local function arr_get(self, dims, def)
-  checkArg(2, dims, "table")
+local function arr_get(self, def, ...)
+  local dims = {...}
   if #dims ~= #self._size then
     error(string.format("[Selene] attempt to get %d-dimensional slice of %d-dimensional array.", #dims, #self._size), 2)
   end
-  local realdims, newsize = {}, {}
   local newsize = {}
   local c, starts, ends = {}, {}, {}
   local co = {}
@@ -1775,16 +1774,18 @@ local function arr_get(self, dims, def)
   for i, s in ipairs(self._size) do
     local start = type(dims[i]) == "table" and dims[i][1] or dims[i]
     local stop = type(dims[i]) == "table" and dims[i][2] or dims[i]
+    if stop < start then
+      error(string.format("[Selene] attempt to get slice where upper limit %d is smaller than lower limit %d.", stop, start), 2)
+    end
     if start < 1 or stop > s then
       pure = false
     end
-    realdims[i] = {math.max(1, start), math.min(s, stop)}
+    local realstart, realstop = math.max(1, start), math.min(s, stop)
     newsize[i] = stop - start + 1
-    --newreal[i] = {realdims[i][1] - start + 1, realdims[i][2] - start + 1}
-    c[i] = realdims[i][1]
-    co[i] = realdims[i][1] - start + 1
-    starts[i] = realdims[i][1]
-    ends[i] = realdims[i][2]
+    c[i] = realstart
+    co[i] = realstart - start + 1
+    starts[i] = realstart
+    ends[i] = realstop
     dims[i] = {start, stop}
   end
   if pure then
