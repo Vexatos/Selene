@@ -1900,7 +1900,7 @@ local function patchNativeLibs(env)
   end
 end
 
-local function loadSeleneConstructs()
+local function populateTables()
   _Table.concat = tbl_concat
   _Table.foreach = tbl_foreach
   _Table.map = tbl_map
@@ -1950,7 +1950,9 @@ local function loadSeleneConstructs()
   _Table.len = function(self)
     return #self._tbl
   end
+end
 
+local function populateOthers()
   _Array = shallowcopy(_Table)
   _Array.dims = arr_dims
   _Array.size = arr_size
@@ -2001,6 +2003,12 @@ local function loadSeleneConstructs()
     checkType(1, self, "stringlist")
     return switch(self, ...)
   end
+end
+
+local function loadSeleneConstructs()
+  populateTables()
+
+  populateOthers()
 end
 
 local function loadSelene(env, lvMode)
