@@ -310,6 +310,7 @@ local _Table = {}
 local _String = {}
 local _Iterable = {}
 local _Array = {}
+local _Func = {}
 
 local smt = shallowcopy(mt)
 smt.ltype = "stringlist"
@@ -432,6 +433,9 @@ local function newFunc(f, parCnt, applies)
     error("[Selene] could not create function: bad parameter amount: " .. parCnt .. " is below 0", 2)
   end
   local newF = {}
+  for i, j in pairs(_Func) do
+    newF[i] = j
+  end
   local fm = shallowcopy(fmt)
   newF._fnc = f
   newF.applies = applies
@@ -1031,6 +1035,11 @@ local function tbl_values(self)
   return newList(rawvalues(self))
 end
 
+local function tbl_unwrap(self)
+  checkType(1, self, "map", "list", "stringlist", "array")
+  return self._tbl
+end
+
 -- for iterable objects
 
 local function itr_collect(self)
@@ -1063,6 +1072,16 @@ local function itr_take(self, amt)
     end
   end
   return newListOrMap(taken)
+end
+
+local function itr_unwrap(self)
+  return self._spl
+end
+
+-- For functions
+
+local function fnc_unwrap(self)
+  return self._fnc
 end
 
 -- for the actual table library
@@ -1461,9 +1480,6 @@ local function newArray(tbl, size, len)
     error(string.format("[Selene] attempt to reshape table of length %d into array of size (%s).", #tbl, table.concat(size, ", ")), 2)
   end
   local newObj = {}
-  for i, j in pairs(_Table) do
-    newObj[i] = j
-  end
   for i, j in pairs(_Array) do
     newObj[i] = j
   end
@@ -1944,6 +1960,7 @@ local function loadSeleneConstructs()
   _Table.clear = tbl_clear
   _Table.keys = tbl_keys
   _Table.values = tbl_values
+  _Table.unwrap = tbl_unwrap
 
   _Table.shallowcopy = function(self)
     checkType(1, self, allMaps)
@@ -1960,6 +1977,7 @@ local function loadSeleneConstructs()
     return mt and mt.__len and mt.__len(self) or #self._tbl
   end
 
+  _Array = shallowcopy(_Table)
   _Array.dims = arr_dims
   _Array.size = arr_size
   _Array.get = arr_get
@@ -1968,6 +1986,9 @@ local function loadSeleneConstructs()
   _Iterable.collect = itr_collect
   _Iterable.drop = itr_drop
   _Iterable.take = itr_take
+  _Iterable.unwrap = itr_unwrap
+
+  _Func.unwrap = fnc_unwrap
 
   _String.foreach = tbl_foreach
   _String.map = tbl_map
@@ -2000,6 +2021,7 @@ local function loadSeleneConstructs()
     return str_iter(tostring(self))
   end
   _String.call = tbl_call
+  _String.unwrap = tbl_unwrap
 
   _String.switch = function(self, ...)
     checkType(1, self, "stringlist")
