@@ -313,7 +313,7 @@ local function findDollars(tokens, i, part, line)
   local curr = tokens[i + 1][1]
   if tokens[i - 1][1] and tokens[i - 1][1]:find("[:%.]$") then
     tokens[i - 1][1] = tokens[i - 1][1]:sub(1, #(tokens[i - 1][1]) - 1)
-    tokens[i][1] = "()"
+    tokens[i][1] = ":unwrap()"
     return i - 1, i
   elseif curr:find("^[({\"']") or curr:find("^%[=*%[") then
     tokens[i][1] = "_selene._new"
