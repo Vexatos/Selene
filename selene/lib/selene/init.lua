@@ -976,6 +976,20 @@ local function tbl_forall(self, f)
   return true
 end
 
+local function tbl_sortby(self, f)
+  checkType(1, self, "list", "array")
+  checkFunc(2, f, 1)
+  local cache = {}
+  local sorted = shallowcopy(self._tbl)
+  for _, j in ipairs(sorted) do
+    cache[j] = f(j)
+  end
+  table.sort(sorted, function(a, b)
+    return cache[a] < cache[b]
+  end)
+  return newList(sorted)
+end
+
 local function rawkeys(self)
   local keys = {}
   for i in mpairs(self) do
@@ -1931,6 +1945,7 @@ local function populateTables()
   _Table.count = tbl_count
   _Table.exists = tbl_exists
   _Table.forall = tbl_forall
+  _Table.sortby = tbl_sortby
   _Table.call = tbl_call
   _Table.clear = tbl_clear
   _Table.keys = tbl_keys
