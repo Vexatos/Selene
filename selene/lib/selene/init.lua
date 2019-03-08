@@ -1001,16 +1001,23 @@ local function tbl_forall(self, f)
   return true
 end
 
-local function tbl_sortby(self, f)
+local function op_lt(a, b)
+  return a < b
+end
+
+local function tbl_sortby(self, by, comp)
   checkType(1, self, "list", "array")
-  checkFunc(2, f, 1)
+  checkFunc(2, by, 1)
+  checkType(3, comp, "function", "nil")
+  comp = comp or op_lt
+  checkFunc(3, comp, 2)
   local cache = {}
   local sorted = shallowcopy(self._tbl)
   for _, j in ipairs(sorted) do
-    cache[j] = f(j)
+    cache[j] = by(j)
   end
   table.sort(sorted, function(a, b)
-    return cache[a] < cache[b]
+    return comp(cache[a], cache[b])
   end)
   return newList(sorted)
 end
