@@ -1340,26 +1340,42 @@ local function str_reduceright(self, f)
   return str_reduceleft(self:reverse(), f)
 end
 
--- Splits the string, returns a list
-local function str_split(self, sep)
+local function str_split(self, sep, maxSize, useRegex)
   checkArg(1, self, "string")
   checkArg(2, sep, "string", "number", "nil")
+
   local t = {}
+
+  if not sep or sep == "" then
+    sep = 1
+  end
+
   if type(sep) == "number" then
     while #self > 0 do
       table.insert(t, self:sub(1, sep))
       self = self:sub(sep + 1)
     end
   else
-    sep = sep or ""
-    local p
-    if #sep <= 0 then
-      p = "."
-    else
-      p = "([^" .. sep .. "]+)"
-    end
-    for str in self:gmatch(p) do
-      table.insert(t, str)
+    checkArg(3, maxSize, "number", "nil")
+    checkArg(4, useRegex, "boolean", "nil")
+    -- http://lua-users.org/wiki/SplitJoin
+    -- "Function: true Python semantics for split"
+    assert(maxSize == nil or maxSize >= 1, "invalid argument 3: max table size is smaller than 1.")
+
+    if self:len() > 0 then
+      local plain = not useRegex
+      maxSize = maxSize or -1
+
+      local tblIndex, searchIndex = 1, 1
+      local start, stop = self:find(sep, searchIndex, plain)
+      while start and maxSize ~= 0 do
+        t[tblIndex] = self:sub(searchIndex, start - 1)
+        tblIndex = tblIndex + 1
+        searchIndex = stop + 1
+        start, stop = self:find(sep, searchIndex, plain)
+        maxSize = maxSize - 1
+      end
+      t[tblIndex] = self:sub(searchIndex)
     end
   end
   return newList(t)
