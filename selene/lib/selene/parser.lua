@@ -201,15 +201,6 @@ end
 local varPattern = "^[%a_][%w_]*$"
 --local lambdaParPattern = "("..varPattern..")((%s*,%s*)("..varPattern.."))*"
 
-local function isVar(t)
-  for str in t:gmatch("([^.]+)") do
-    if not str:find(varPattern) then
-      return false
-    end
-  end
-  return true
-end
-
 local function perror(msg, lvl)
   msg = msg or "unknown error"
   lvl = lvl or 1
@@ -451,17 +442,40 @@ local function findArrayIndex(tokens, i, part, line)
   return i, i
 end
 
+local function getVar(tokens, i)
+  if not tokens[i] then return end
+  local t = tokens[i][1]
+  local tail = ""
+  if t == "]" then
+    local var, step = bracket(tokens, "]", "[", i - 1, "", -1)
+    if not tokens[step - 1] or not var then
+      return
+    end
+    t, tail = getVar(tokens, step - 1)
+    if not t then return end
+    tail = tail .. "[" .. var.. "]"
+  end
+  for str in t:gmatch("([^.]+)") do
+    if not str:find(varPattern) then
+      return
+    end
+  end
+  return t, tail
+end
+
 local function findAssignmentOperator(tokens, i)
-  if tokens[i - 1][1] and isVar(tokens[i - 1][1]) then
-    tokens[i][1] = " = " .. tokens[i - 1][1] .. " " .. tokens[i][1]:sub(1, #tokens[i][1] - 1)
+  local var, tail = getVar(tokens, i - 1)
+  if var then
+    tokens[i][1] = " = " .. var .. tail .. " " .. tokens[i][1]:sub(1, #tokens[i][1] - 1)
     return i, i
   end
   return false
 end
 
 local function findDollarAssignment(tokens, i, part, line)
-  if tokens[i - 1][1] and isVar(tokens[i - 1][1]) then
-    tokens[i][1] = " = _selene._new(" .. tokens[i - 1][1] .. ")"
+  local var, tail = getVar(tokens, i - 1)
+  if var then
+    tokens[i][1] = " = _selene._new(" .. var .. tail .. ")"
     return i, i
   else
     perror("invalid $$ at index " .. i .. " (line " .. line .. ")")
