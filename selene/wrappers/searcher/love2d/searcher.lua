@@ -21,7 +21,7 @@ local function selene_loader(path)
   return function(name)
     local env = setmetatable({}, { __index = _G })
     local source = love.filesystem.read(path)
-    local f = assert(libenv.load(libenv._selene._parse(source)))
+    local f = assert(libenv.load(libenv._selene._parse(source), path))
     setfenv(f, env)
     local result = f()
     if result then
