@@ -1824,10 +1824,15 @@ local function arr_get(self, def, ...)
   local newsize = {}
   local c, starts, ends = {}, {}, {}
   local co = {}
-  local pure = true
+  local pure, noslices = true, true
   for i, s in ipairs(self._size) do
-    local start = type(dims[i]) == "table" and dims[i][1] or dims[i]
-    local stop = type(dims[i]) == "table" and dims[i][2] or dims[i]
+    local start, stop
+    if type(dims[i]) == "table" then
+      noslices = false
+      start, stop = dims[i][1], dims[i][2]
+    else
+      start, stop = dims[i], dims[i]
+    end
     if stop < start then
       error(string.format("[Selene] attempt to get slice where upper limit %d is smaller than lower limit %d.", stop, start), 2)
     end
@@ -1880,7 +1885,7 @@ local function arr_get(self, def, ...)
       end
     end
   end
-  return res
+  return noslices and res[1] or res
 end
 
 --------
