@@ -6,7 +6,7 @@ Author: Vexatos
 --------
 -- Utils
 --------
-local function checkArg(n, have, ...)
+local checkArg = function(n, have, ...)
   have = type(have)
   local function check(want, ...)
     if not want then
@@ -2077,6 +2077,10 @@ local function loadSelene(env, lvMode)
     env.checkArg = checkArg
     env._selene._checkArg = true
   end
+  if env._selene.notypecheck then
+    env._selene._oldtypecheck = checkArg
+    checkArg = function() end
+  end
   env._selene._newString = newString
   env._selene._newList = newList
   env._selene._newArray = newArray
@@ -2125,6 +2129,9 @@ local function unloadSelene(env)
   end
   if env._selene._checkArg then
     env.checkArg = nil
+  end
+  if env._selene.notypecheck then
+    checkArg = env._selene._oldTypeCheck
   end
   do
     local liveMode = env._selene.liveMode
