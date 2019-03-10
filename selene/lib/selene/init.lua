@@ -1679,6 +1679,9 @@ mdmt.__index = function(tbl, key)
       if type(key[ki]) == "table" then
         return sliceIndex(tbl, key)
       end
+      if key[ki] < 1 or key[ki] > tbl._size[ki] then
+        return nil
+      end
       i = i + ((key[ki] - 1) * m)
       m = m * tbl._size[ki]
     end
@@ -1873,7 +1876,7 @@ local function arr_get(self, def, ...)
     dims[i] = {start, stop}
   end
   if pure then
-    return self[dims]
+    return noslices and self[dims][1] or self[dims]
   end
   local res = fillArray(def, newsize)
   do
