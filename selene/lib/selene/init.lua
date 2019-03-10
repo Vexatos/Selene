@@ -1534,6 +1534,7 @@ end
 local function posToIndex(pos, size)
   local i, m = 0, 1
   for ki = 1, #pos do
+    if pos[ki] < 1 or pos[ki] > size[ki] then return end
     i = i + ((pos[ki] - 1) * m)
     m = m * size[ki]
   end
@@ -1833,7 +1834,7 @@ local function arr_get(self, def, ...)
     if start < 1 or stop > s then
       pure = false
     end
-    local realstart, realstop = math.max(1, start), math.min(s, stop)
+    local realstart, realstop = clamp(start, 1, s), clamp(stop, 1, s)
     newsize[i] = stop - start + 1
     c[i] = realstart
     co[i] = realstart - start + 1
@@ -1845,7 +1846,12 @@ local function arr_get(self, def, ...)
     return self[dims]
   end
   local res = fillArray(def, newsize)
-  res[posToIndex(co, res._size)] = self[posToIndex(c, self._size)]
+  do
+    local ind = posToIndex(co, res._size)
+    if ind then
+      res[ind] = self[posToIndex(c, self._size)]
+    end
+  end
   local endreached = true
   for i = 1, #c do
     if c[i] ~= ends[i] then
