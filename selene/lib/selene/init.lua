@@ -1844,19 +1844,14 @@ local function arr_dims(self)
   return #self._size
 end
 
-local function arr_get(self, def, ...)
-  local dims = {...}
-  if #dims ~= #self._size then
-    error(string.format("[Selene] attempt to get %d-dimensional slice of %d-dimensional array.", #dims, #self._size), 2)
-  end
+local function arr_get_slices(self, def, dims)
   local newsize = {}
   local c, starts, ends = {}, {}, {}
   local co = {}
-  local pure, noslices = true, true
+  local pure = true
   for i, s in ipairs(self._size) do
     local start, stop
     if type(dims[i]) == "table" then
-      noslices = false
       start, stop = dims[i][1], dims[i][2]
     else
       start, stop = dims[i], dims[i]
@@ -1876,7 +1871,7 @@ local function arr_get(self, def, ...)
     dims[i] = {start, stop}
   end
   if pure then
-    return noslices and self[dims][1] or self[dims]
+    return self[dims]
   end
   local res = fillArray(def, newsize)
   do
@@ -1913,7 +1908,26 @@ local function arr_get(self, def, ...)
       end
     end
   end
-  return noslices and res[1] or res
+  return res
+end
+
+local function arr_get(self, def, ...)
+  local dims = {...}
+  if #dims ~= #self._size then
+    error(string.format("[Selene] attempt to get %d-dimensional slice of %d-dimensional array.", #dims, #self._size), 2)
+  end
+  local i, m = 0, 1
+  for ki = 1, #dims do
+    if type(dims[ki]) == "table" then
+      return arr_get_slices(self, def, dims)
+    end
+    if dims[ki] < 1 or dims[ki] > self._size[ki] then
+      return def
+    end
+    i = i + ((dims[ki] - 1) * m)
+    m = m * self._size[ki]
+  end
+  return self._tbl[i + 1]
 end
 
 --------
