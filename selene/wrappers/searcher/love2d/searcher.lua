@@ -2,6 +2,7 @@ local selene = require("selene")
 
 local libenv = {}
 setmetatable(libenv, { __index = _G })
+libenv.table.unpack = table.unpack or unpack
 selene.load(libenv)
 
 local lib = {}
