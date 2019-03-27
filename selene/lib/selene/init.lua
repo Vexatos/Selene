@@ -1160,6 +1160,21 @@ local function tbl_tclear(self)
   return self
 end
 
+local function tbl_tsortby(self, by, comp)
+  checkList(1, self)
+  comp = comp or op_lt
+  checkFunc(3, comp, 2)
+  local cache = {}
+  local sorted = shallowcopy(self)
+  for _, j in ipairs(sorted) do
+    cache[j] = by(j)
+  end
+  table.sort(sorted, function(a, b)
+    return comp(cache[a], cache[b])
+  end)
+  return newList(sorted)
+end
+
 --------
 -- Bulk data operations on stringlists
 --------
@@ -1982,6 +1997,7 @@ local function patchNativeLibs(env)
     checkArg(1, tbl, "table")
     return rawvalues(tbl)
   end
+  env.table.sortby = tbl_tsortby
   env.table.filled = fillArray
 
   if env.bit32 then
