@@ -2209,6 +2209,7 @@ local function unloadSelene(env)
   env.table.clear = nil
   env.table.keys = nil
   env.table.values = nil
+  env.table.sortby = nil
   env.table.filled = nil
 
   if env.bit32 then
