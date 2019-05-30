@@ -93,6 +93,18 @@ local function isList(t)
   return false, -2
 end
 
+local function getLen(t)
+  local tp = tblType(t)
+  if tp == "list" or tp == "stringlist" or tp == "array" then
+    return t:len()
+  elseif tp == "map" then
+    return false, -1
+  elseif tp == "table" and isList_t(t) then
+    return #t
+  end
+  return false, -2
+end
+
 local function checkList(n, have)
   if not isList(have) then
     local msg = string.format("[Selene] bad argument #%d (list expected, got %s)", n, have)
@@ -135,8 +147,8 @@ local allMaps = { "map", "list", "stringlist" }
 local allIterables = { "map", "list", "stringlist", "iterable", "array" }
 local allIndexables = {"list", "stringlist", "iterable", "array" }
 
--- Errors if the value is not a valid type (list or map)
-local function checkType(n, have, ...)
+-- Returns true if the value is a valid type
+local function isType(n, have, ...)
   have = tblType(have)
   local things = { ... }
   if #things == 0 then
@@ -146,12 +158,19 @@ local function checkType(n, have, ...)
   end
   for _, want in ipairs(things) do
     if have == want then
-      return
+      return true
     end
   end
-  local msg = string.format("[Selene] bad argument #%d (%s expected, got %s)",
-    n, table.concat(things, " or "), have)
-  error(msg, 3)
+  return false
+end
+
+-- Errors if the value is not a valid type (list or map)
+local function checkType(n, have, ...)
+  if not isType(n, have, ...) then
+    local msg = string.format("[Selene] bad argument #%d (%s expected, got %s)",
+            n, table.concat(things, " or "), have)
+    error(msg, 3)
+  end
 end
 
 -- Errors if the value is not a function or does not have the required parameter count
@@ -1920,6 +1939,41 @@ local function arr_get(self, def, ...)
   return self._tbl[i + 1]
 end
 
+-- Broadcast calls
+local function broadcast(func, ...)
+  checkFunc(1, func)
+  local vectors = {}
+  local args = {...}
+  local len = -1
+  for i, arg in ipairs(args) do
+    local t_len = getLen(arg)
+    if t_len then
+      if len < 0 then
+        len = t_len
+      elseif t_len ~= len then
+        error(string.format("[Selene] attempt to broadcast call with table of length %d and table of length %d", len, t_len), 2)
+      end
+      vectors[i] = true
+    end
+  end
+  if len < 0 then
+    return func(...)
+  end
+  local res = {}
+  for i = 1, len do
+    local i_arg = {}
+    for j, arg in ipairs(args) do
+      if vectors[j] then
+        i_arg[j] = arg[i]
+      else
+        i_arg[j] = arg
+      end
+    end
+    res[i] = func(table.unpack(i_arg))
+  end
+  return newList(res)
+end
+
 --------
 -- Adding to global variables
 --------
@@ -2119,6 +2173,7 @@ local function loadSelene(env, lvMode)
   env._selene._newOptional = newOptional
   env._selene._VERSION = VERSION
   env._selene._parse = parse
+  env._selene._broadcast = broadcast
   env.ltype = tblType
   env.checkType = checkType
   env.checkFunc = checkFunc
@@ -2126,6 +2181,7 @@ local function loadSelene(env, lvMode)
   env.lpairs = lpairs
   env.isList = isList
   env.switch = switch
+  env.broadcast = broadcast
 
   patchNativeLibs(env)
   loadSeleneConstructs(env)
@@ -2175,6 +2231,7 @@ local function unloadSelene(env)
   env.lpairs = nil
   env.isList = nil
   env.switch = nil
+  env.broadcast = nil
 
   env.string.foreach = nil
   env.string.map = nil

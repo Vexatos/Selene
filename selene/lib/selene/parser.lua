@@ -10,7 +10,7 @@ local function trim(value) -- from http://lua-users.org/wiki/StringTrim
 end
 
 local escapable = { "'", '"' }
-local specialchars = { "(", ")", "[", "]", "{", "}", ":", "?", ",", "+", "-", "*", "%", "^", "&", "~", "|" }
+local specialchars = { "(", ")", "[", "]", "{", "}", ":", "?", ",", "+", "-", "*", "%", "^", "&", "~", "|", "@" }
 local doublechars = { "/", "<", ">", "$" }
 local lambdachars = { "-", "=" }
 local assignchars = { "+", "-", "*", "/", "%", "^", "&", "|", ">", "<", ":", "~", "//", "<<", ">>", ".." }
@@ -444,14 +444,15 @@ end
 
 local function getVar(tokens, i)
   if not tokens[i] then return end
-  local t = tokens[i][1]
+  local t, start = tokens[i][1], i
   local tail = ""
   if t == "]" then
-    local var, step = bracket(tokens, "]", "[", i - 1, "", -1)
-    if not tokens[step - 1] or not var then
+    local var
+    var, start = bracket(tokens, "]", "[", i - 1, "", -1)
+    if not tokens[start - 1] or not var then
       return
     end
-    t, tail = getVar(tokens, step - 1)
+    t, tail, start = getVar(tokens, start - 1)
     if not t then return end
     tail = tail .. "[" .. var.. "]"
   end
@@ -460,7 +461,29 @@ local function getVar(tokens, i)
       return
     end
   end
-  return t, tail
+  return t, tail, start
+end
+
+local function findBroadcastCall(tokens, i, part, line)
+  if not tokens[i+1] or tokens[i+1][1] ~= "(" then
+    perror("invalid broadcast at index " .. i + 1 .. " (line " .. line .. "): must be in front of parentheses.")
+  end
+  local var, tail, start = getVar(tokens, i - 1)
+  if var then
+    var = var .. tail
+  else
+    if tokens[i-1][1] ~= ")" or not tokens[i-2] then
+      perror("invalid broadcast at index " .. i + 1 .. " (line " .. line .. "): must come after a variable or parentheses.")
+    end
+    var, start = bracket(tokens, ")", "(", i - 2, "", -1)
+    var = "(" .. var .. ")"
+  end
+  local func = string.format("_selene._broadcast(%s, ", var)
+  for _ = start, i + 1 do
+    table.remove(tokens, start)
+  end
+  table.insert(tokens, start, {func, line, false})
+  return start, start
 end
 
 local function findAssignmentOperator(tokens, i)
@@ -514,6 +537,7 @@ local keywords = {
   [":"    ] = findSelfCall,
   ["["    ] = findArrayIndex,
   --["match"] = findMatch,
+  ["@"    ] = findBroadcastCall,
   ["$"    ] = findDollars,
   ["$$"   ] = findDollarAssignment,
   ["+="   ] = findAssignmentOperator,
