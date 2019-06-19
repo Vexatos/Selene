@@ -96,11 +96,11 @@ end
 local function getLen(t)
   local tp = tblType(t)
   if tp == "list" or tp == "stringlist" or tp == "array" then
-    return t:len()
+    return t:len(), "list"
   elseif tp == "map" then
     return false, -1
   elseif tp == "table" and isList_t(t) then
-    return #t
+    return #t, "table"
   end
   return false, -2
 end
@@ -1945,8 +1945,9 @@ local function broadcast(func, ...)
   local vectors = {}
   local args = {...}
   local len = -1
+  local makeList = false
   for i, arg in ipairs(args) do
-    local t_len = getLen(arg)
+    local t_len, t_type = getLen(arg)
     if t_len then
       if len < 0 then
         len = t_len
@@ -1954,6 +1955,7 @@ local function broadcast(func, ...)
         error(string.format("[Selene] attempt to broadcast call with table of length %d and table of length %d", len, t_len), 2)
       end
       vectors[i] = true
+      makeList = makeList or t_type == "list"
     end
   end
   if len < 0 then
@@ -1971,7 +1973,7 @@ local function broadcast(func, ...)
     end
     res[i] = func(table.unpack(i_arg))
   end
-  return newList(res)
+  return makeList and newList(res) or res
 end
 
 --------
