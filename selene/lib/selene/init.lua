@@ -72,7 +72,9 @@ end
 local function isList_t(t)
   local c = 0
   for i in pairs(t) do
-    if type(i) ~= "number" or i < 1 then
+    if type(i) ~= "number" then
+      return false, -1
+    elseif i < 1 then
       return false, i
     end
     c = c + 1
@@ -1014,6 +1016,28 @@ local function tbl_sortby(self, by, comp)
     return comp(cache[a], cache[b])
   end)
   return newList(sorted)
+end
+
+local function tbl_unique(self)
+  checkType(1, self)
+  local unique = {}
+  local contains = {}
+  for _, j in mpairs(self) do
+    if not contains[j] then
+      contains[j] = true
+      table.insert(unique, j)
+    end
+  end
+  return newList(unique)
+end
+
+local function tbl_occurences(self)
+  checkType(1, self)
+  local occurences = {}
+  for _, j in mpairs(self) do
+    occurences[j] = occurences[j] and occurences[j] + 1 or 1
+  end
+  return new(occurences)
 end
 
 local function rawkeys(self)
@@ -2074,6 +2098,8 @@ local function populateTables()
   _Table.keys = tbl_keys
   _Table.values = tbl_values
   _Table.unwrap = tbl_unwrap
+  _Table.unique = tbl_unique
+  _Table.occurences = tbl_occurences
 
   _Table.shallowcopy = function(self)
     checkType(1, self, allMaps)
@@ -2136,6 +2162,8 @@ local function populateOthers()
   end
   _String.call = tbl_call
   _String.unwrap = tbl_unwrap
+  _String.unique = tbl_unique
+  _String.occurences = tbl_occurences
 
   _String.switch = function(self, ...)
     checkType(1, self, "stringlist")
