@@ -556,12 +556,17 @@ local keywords = {
   [":="   ] = findAssignmentOperator,
 }
 
-local function concatWithLines(tokens)
+local function concatWithLines(tokens, unparsed)
   local chunktbl = {}
   local last = 0
   local deadlines = {}
+  local parsedlines = {}
+  unparsed = unparsed:split("\n")
   for i, token in ipairs(tokens) do
     local j = token[2]
+    if token[4] or token[1]:find("\n") then
+      parsedlines[j] = true
+    end
     if not chunktbl[j] then chunktbl[j] = {} end
     chunktbl[j][#chunktbl[j] + 1] = token[1]
     last = math.max(last, j)
@@ -578,16 +583,15 @@ local function concatWithLines(tokens)
       chunktbl[i] = {}
     end
   end
+  local offset = 0
   local i = 1
   while i <= #chunktbl do
     if chunktbl[i] ~= false then
-      if not deadlines[i] then
-        chunktbl[i] = table.concat(chunktbl[i], " ")
-        i = i + 1
-      else
+      if deadlines[i] then
         chunktbl[deadlines[i]] = chunktbl[deadlines[i]] .. " " .. table.concat(chunktbl[i], " ")
         deadlines[i] = nil
         table.remove(chunktbl, i)
+        offset = offset + 1
         for k = i + 1, last do
           if deadlines[k] then
             if deadlines[k] >= i then
@@ -598,10 +602,17 @@ local function concatWithLines(tokens)
             deadlines[k] = nil
           end
         end
+      elseif parsedlines[i + offset] then
+        chunktbl[i] = table.concat(chunktbl[i], " ")
+        i = i + 1
+      else
+        chunktbl[i] = unparsed[i + offset]
+        i = i + 1
       end
     else
       deadlines[i] = nil
       table.remove(chunktbl, i)
+      offset = offset + 1
       for k = i + 1, last do
         if deadlines[k] then
           if deadlines[k] >= i then
@@ -627,6 +638,7 @@ local function parse(chunk, stripcomments)
   if not tokens then
     error(utime)
   end
+  local unchanged = true
   local i = 1
   while i <= #tokens do
     local part = tokens[i][1]
@@ -635,14 +647,14 @@ local function parse(chunk, stripcomments)
       if not tokens[i - 1] then tokens[i - 1] = {"", tokens[i][2], false} end
       local start, stop = keywords[part](tokens, i, part, tokens[i][2], stripcomments)
       if start then
-        chunk = nil
+        unchanged = false
         stop = stop or start
         local toInsert = {}
         for count = start, stop do
           local stokens, stokenlines, sskiplines
           stokens, stokenlines, sskiplines, utime = tokenize(tokens[start][1], stripcomments, utime)
           for si, stoken in ipairs(stokens) do
-            table.insert(toInsert, { stoken[1], tokens[start][2] + stoken[2] - 1, stoken[3] })
+            table.insert(toInsert, { stoken[1], tokens[start][2] + stoken[2] - 1, stoken[3], true })
           end
           table.remove(tokens, start)
         end
@@ -655,7 +667,7 @@ local function parse(chunk, stripcomments)
     end
     i = i + 1
   end
-  return chunk or concatWithLines(tokens)
+  return unchanged and chunk or concatWithLines(tokens, chunk)
 end
 
 function selenep.parse(chunk, stripcomments)
