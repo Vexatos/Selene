@@ -34,7 +34,7 @@ end
 local function tokenize(value, stripcomments, utime)
   if stripcomments == nil then stripcomments = true end
   local tokens, token, lines = {[0]={}}, "", 1
-  local escaped, quoted, start = false, false, -1
+  local escaped, quoted, start, startline = false, false, -1, -1
   local waiting = {}
   for i = 1, #value do
     if timeout and utime then
@@ -106,21 +106,21 @@ local function tokenize(value, stripcomments, utime)
       token = ""
     elseif not quoted and escapable[char] then
       quoted = char
-      start = i
+      start, startline = i, lines
       token = token .. char
     elseif char == "-" and not quoted and string.find(token, "%-$") then
       quoted = "-" .. char
-      start = i - 1
+      start, startline = i - 1, lines
       token = token .. char
     elseif char == "-" and not quoted and token == "" and tokens[#tokens][1] == "-" then
       token = "--"
       quoted = token
-      start = i - 1
+      start, startline = i - 1, lines
       tokens[#tokens] = nil
     elseif char == "[" and not quoted and tokens[#tokens][1] == "[" and string.find(token, "^=*$") then -- derpy quote
       local s = "[" .. token
       quoted = s .. char
-      start = i - #s
+      start, startline = i - #s, lines
       token = s .. char
       table.remove(tokens, #tokens)
     elseif not quoted and string.find(char, "%s") then -- delimiter
@@ -184,7 +184,7 @@ local function tokenize(value, stripcomments, utime)
     end
   end
   if quoted then
-    return nil, "unclosed quote at index " .. start
+    return nil, string.format("unclosed quote at index %d (quote %s) near line %d", start, quoted, startline)
   end
   if token ~= "" then
     table.insert(tokens, {token, lines})
@@ -636,7 +636,7 @@ local function parse(chunk, stripcomments)
   end
   local tokens, utime = tokenize(chunk, stripcomments, utime)
   if not tokens then
-    error(utime)
+    perror(utime)
   end
   local unchanged = true
   local i = 1
