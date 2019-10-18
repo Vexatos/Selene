@@ -250,6 +250,7 @@ local mt = {
 
 local lmt = shallowcopy(mt)
 lmt.ltype = "list"
+lmt.islist = true
 lmt.__ipairs = function(tbl)
   return function(tbl, i)
     i = i + 1
@@ -261,6 +262,7 @@ end
 
 local mdmt = shallowcopy(lmt)
 mdmt.ltype = "array"
+mdmt.islist = true
 
 local function truef() return true end
 
@@ -310,6 +312,7 @@ local _Func = {}
 
 local smt = shallowcopy(mt)
 smt.ltype = "stringlist"
+smt.islist = true
 smt.__call = function(str)
   return table.concat(str._tbl)
 end
@@ -371,6 +374,17 @@ local function newOptional(...)
   return new({ ... })
 end
 
+local function _newStringList(s)
+  s = s or {}
+  local newObj = {}
+  for i, j in pairs(_String) do
+    newObj[i] = j
+  end
+  newObj._tbl = s
+  setmetatable(newObj, smt)
+  return newObj
+end
+
 local function newStringList(s)
   checkArg(1, s, "table", "nil")
   s = s or {}
@@ -412,6 +426,21 @@ local function newList(...)
   end
   setmetatable(newObj, lmt)
   return newObj
+end
+
+local function _newListOrMap(t, islist)
+  t = t or {}
+  local newObj = {}
+  for i, j in pairs(_Table) do
+    newObj[i] = j
+  end
+  newObj._tbl = t
+  setmetatable(newObj, islist and lmt or mt)
+  return newObj
+end
+
+local function _newList(t)
+  return _newListOrMap(t, true)
 end
 
 local function newListOrMap(...)
@@ -490,7 +519,7 @@ local function concatOnCondition(first, second, cond)
     for _, v in ipairs(second) do
       table.insert(merged, v)
     end
-    return newListOrMap(merged)
+    return _newList(merged)
   else
     local sType = tblType(second)
     error(string.format("[Selene] attempt to concatenate %s and %s (cannot insert %s into %s)",
@@ -515,7 +544,7 @@ lmt.__add = function(first, second)
   if fType == "list" then
     local merged = shallowcopy(first._tbl)
     table.insert(merged, second)
-    return newListOrMap(merged)
+    return _newList(merged)
   else
     local sType = tblType(second)
     error(string.format("[Selene] attempt to add %s and %s (cannot insert %s into %s)",
@@ -529,7 +558,7 @@ lmt.__index = function(tbl, key)
     for i = key[1], key[2] do
       table.insert(r, tbl._tbl[i])
     end
-    return newListOrMap(r)
+    return _newList(r)
   else
     return tbl._tbl[key]
   end
@@ -623,7 +652,7 @@ local function wrap_returnself(self)
 end
 
 local function wrap_returnempty(self)
-  return newListOrMap({})
+  return _newList({})
 end
 
 local function checkParCnt(parCnt)
@@ -675,7 +704,7 @@ local function tbl_filter(self, f)
       insert(filtered, list, i, j)
     end
   end
-  return newListOrMap(filtered)
+  return _newListOrMap(filtered, getmetatable(self).islist)
 end
 
 local function wrap_tableDropReturn(self, amt, wrap)
@@ -684,7 +713,7 @@ local function wrap_tableDropReturn(self, amt, wrap)
   for i = start, stop do
     insert(dropped, false, self._tbl[i])
   end
-  return newListOrMap(dropped)
+  return _newList(dropped)
 end
 
 local function wrap_stringDropReturn(self, amt, wrap)
@@ -774,7 +803,7 @@ end
 
 local function tbl_slice(self, start, stop, step)
   checkType(1, self, "list", "stringlist", "array")
-  return wrap_rawslice(self, start, stop, step, wrap_returnselfentry, newListOrMap)
+  return wrap_rawslice(self, start, stop, step, wrap_returnselfentry, _newList)
 end
 
 local function tbl_splice(self, index, ...)
@@ -790,7 +819,7 @@ local function tbl_splice(self, index, ...)
       table.insert(spliced, index + i - 1, repl[i])
     end
   end
-  return newList(spliced)
+  return _newList(spliced)
 end
 
 --inverts the list
@@ -804,7 +833,7 @@ local function wrap_reverse(self, newl)
 end
 
 local function tbl_reverse(self)
-  return wrap_reverse(self, newListOrMap)
+  return wrap_reverse(self, _newList)
 end
 
 local function rawflip(self)
@@ -898,7 +927,7 @@ end
 
 local function tbl_flatten(self)
   checkType(1, self, "list", "iterable")
-  return newListOrMap(rawflatten(self._tbl))
+  return _newList(rawflatten(self._tbl))
 end
 
 local function tbl_flatmap(self, f)
@@ -942,7 +971,7 @@ local function tbl_zip(self, other)
       table.insert(zipped, { self._tbl[i], other._tbl[i] })
     end
   end
-  return newList(zipped)
+  return _newList(zipped)
 end
 
 local function tbl_contains(self, val)
@@ -1015,7 +1044,7 @@ local function tbl_sortby(self, by, comp)
   table.sort(sorted, function(a, b)
     return comp(cache[a], cache[b])
   end)
-  return newList(sorted)
+  return _newList(sorted)
 end
 
 local function tbl_unique(self)
@@ -1028,7 +1057,7 @@ local function tbl_unique(self)
       table.insert(unique, j)
     end
   end
-  return newList(unique)
+  return _newList(unique)
 end
 
 local function tbl_occurences(self)
@@ -1066,12 +1095,12 @@ end
 
 local function tbl_keys(self)
   checkType(1, self)
-  return newList(rawkeys(self))
+  return _newList(rawkeys(self))
 end
 
 local function tbl_values(self)
   checkType(1, self)
-  return newList(rawvalues(self))
+  return _newList(rawvalues(self))
 end
 
 local function tbl_unwrap(self)
@@ -1110,7 +1139,7 @@ local function itr_take(self, amt)
       insert(taken, false, next)
     end
   end
-  return newListOrMap(taken)
+  return _newList(taken)
 end
 
 local function itr_unwrap(self)
@@ -1190,7 +1219,7 @@ local function tbl_tsortby(self, by, comp)
   table.sort(sorted, function(a, b)
     return comp(cache[a], cache[b])
   end)
-  return newList(sorted)
+  return _newList(sorted)
 end
 
 --------
@@ -1206,7 +1235,7 @@ local function strl_filter(self, f)
       insert(filtered, false, parCnt(i, j))
     end
   end
-  return newStringList(filtered)
+  return _newStringList(filtered)
 end
 
 local function strl_dropOrTake(self, amt, wrap)
@@ -1241,11 +1270,11 @@ end
 
 local function strl_slice(self, start, stop, step)
   checkType(1, self, "stringlist")
-  return wrap_rawslice(self, start, stop, step, wrap_returnselfentry, newStringList)
+  return wrap_rawslice(self, start, stop, step, wrap_returnselfentry, _newStringList)
 end
 
 local function strl_reverse(self)
-  return wrap_reverse(self, newStringList)
+  return wrap_reverse(self, _newStringList)
 end
 
 --------
@@ -1369,7 +1398,7 @@ end
 
 local function str_slice(self, start, stop, step)
   checkArg(1, self, "string")
-  return wrap_rawslice(self, start, stop, step, wrap_str_slicepart, newStringList)
+  return wrap_rawslice(self, start, stop, step, wrap_str_slicepart, _newStringList)
 end
 
 -- Returns the accumulator
@@ -1443,7 +1472,7 @@ local function str_split(self, sep, maxSize, useRegex)
       t[tblIndex] = self:sub(searchIndex)
     end
   end
-  return newList(t)
+  return _newList(t)
 end
 
 local function str_contains(self, val)
@@ -1997,7 +2026,7 @@ local function broadcast(func, ...)
     end
     res[i] = func(table.unpack(i_arg))
   end
-  return makeList and newList(res) or res
+  return makeList and _newList(res) or res
 end
 
 --------
@@ -2103,7 +2132,7 @@ local function populateTables()
 
   _Table.shallowcopy = function(self)
     checkType(1, self, allMaps)
-    return newListOrMap(shallowcopy(self._tbl))
+    return _newListOrMap(shallowcopy(self._tbl), getmetatable(self).islist)
   end
 
   _Table.switch = function(self, ...)
