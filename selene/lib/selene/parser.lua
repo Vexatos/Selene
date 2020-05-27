@@ -238,12 +238,20 @@ local function bracket(tokens, plus, minus, step, result, incr, start, returntok
   end
 end
 
+-- http://lua-users.org/wiki/SplitJoin
+-- "Function: true Python semantics for split"
 local function split(self, sep)
   local t = {}
-  local i = 1
-  for str in self:gmatch(string.format("([^%s]+)", sep)) do
-    t[i] = trim(str)
-    i = i + 1
+  if self:len() > 0 then
+    local tblIndex, searchIndex = 1, 1
+    local start, stop = self:find(sep, searchIndex, true)
+    while start do
+      t[tblIndex] = trim(self:sub(searchIndex, start - 1))
+      tblIndex = tblIndex + 1
+      searchIndex = stop + 1
+      start, stop = self:find(sep, searchIndex, true)
+    end
+    t[tblIndex] = trim(self:sub(searchIndex))
   end
   return t
 end
@@ -302,7 +310,7 @@ end
 
 local function findDollars(tokens, i, part, line)
   local curr = tokens[i + 1][1]
-  if tokens[i - 1][1] and tokens[i - 1][1]:find("[:%.]$") and not (tokens[i + 1] and tokens[i + 1][1] == "(") then
+  if tokens[i - 1][1] and tokens[i - 1][1]:find("^[:%.]$") then
     tokens[i - 1][1] = tokens[i - 1][1]:sub(1, #(tokens[i - 1][1]) - 1)
     tokens[i][1] = ":unwrap()"
     return i - 1, i
