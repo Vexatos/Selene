@@ -6,7 +6,7 @@ else
   local parser = require("selene.parser")
   local selene = require("selene")
   selene.load(env)
-  env._PROMPT = "selene> "
+  env._PROMPT = "\27[32mselene> \27[37m"
   local oldload = env.load
   env.load = function(ld, src, mv, loadenv)
     if type(ld) == "function" then
