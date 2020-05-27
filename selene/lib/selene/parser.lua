@@ -302,7 +302,7 @@ end
 
 local function findDollars(tokens, i, part, line)
   local curr = tokens[i + 1][1]
-  if tokens[i - 1][1] and tokens[i - 1][1]:find("[:%.]$") then
+  if tokens[i - 1][1] and tokens[i - 1][1]:find("[:%.]$") and not (tokens[i + 1] and tokens[i + 1][1] == "(") then
     tokens[i - 1][1] = tokens[i - 1][1]:sub(1, #(tokens[i - 1][1]) - 1)
     tokens[i][1] = ":unwrap()"
     return i - 1, i
@@ -561,7 +561,7 @@ local function concatWithLines(tokens, unparsed)
   local last = 0
   local deadlines = {}
   local parsedlines = {}
-  unparsed = unparsed:split("\n")
+  unparsed = split(unparsed, "\n")
   for i, token in ipairs(tokens) do
     local j = token[2]
     if token[4] or token[1]:find("\n") then
