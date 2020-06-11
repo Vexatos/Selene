@@ -183,7 +183,7 @@ local function tokenize(value, stripcomments, utime)
       end
     end
   end
-  if quoted then
+  if quoted and quoted ~= "--" then
     return nil, string.format("unclosed quote at index %d (quote %s) near line %d", start, quoted, startline)
   end
   if token ~= "" then
