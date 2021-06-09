@@ -342,7 +342,7 @@ end
 
 local function findSelfCall(tokens, i, part, line)
   if not tokens[i + 2] then tokens[i + 2] = {"", line, false} end
-  if tokens[i + 1][1]:find(varPattern) and not tokens[i + 2][1]:find("(", 1, true) and not (tokens[i - 1][1] and tokens[i - 1][1]:find("^:")) then
+  if tokens[i + 1][1]:find(varPattern) and not tokens[i + 2][1]:find("(", 1, true) and not tokens[i + 2][1]:find("{", 1, true) and not (tokens[i - 1][1] and tokens[i - 1][1]:find("^:")) then
     tokens[i + 1][1] = tokens[i + 1][1] .. "()"
     return i + 1, i + 2
   end
