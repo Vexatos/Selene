@@ -23,7 +23,7 @@ local function selene_loader(name, path)
   local file = assert(io.open(path, 'rb'))
   local source = file:read("*a")
   file:close()
-  local result = assert(libenv.load(libenv._selene._parse(source), path, 'bt', env))()
+  local result = assert(libenv.load(libenv._selene._parse(source), path, 'bt', env))(path)
   if result then
     return result
   end

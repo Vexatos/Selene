@@ -24,7 +24,7 @@ local function selene_loader(path)
     local why = true
     local f = assert(libenv.load(function() if why then why = false return libenv._selene._parse(source) else return nil end end, path, 'bt', env))
     setfenv(f, env)
-    local result = f()
+    local result = f(path)
     if result then
       return result
     end
