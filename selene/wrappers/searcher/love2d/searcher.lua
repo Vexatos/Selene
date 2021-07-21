@@ -24,7 +24,7 @@ local function selene_loader(path)
     local source = love.filesystem.read(path)
     local f = assert(libenv.load(libenv._selene._parse(source), path))
     setfenv(f, env)
-    local result = f()
+    local result = f(path)
     if result then
       return result
     end
