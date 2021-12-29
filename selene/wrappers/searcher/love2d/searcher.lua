@@ -9,32 +9,14 @@ local lib = {}
 
 lib.libenv = libenv
 
-local _table_blacklist = { "_ENV", "_G" }
-do
-  local t = {}
-  for _, v in pairs(_table_blacklist) do
-    t[v] = true
-  end
-  _table_blacklist = t
-end
-
 local function selene_loader(path)
   return function(name)
-    local env = setmetatable({}, { __index = _G })
     local source = love.filesystem.read(path)
     local f = assert(libenv.load(libenv._selene._parse(source), path))
-    setfenv(f, env)
     local result = f(name)
     if result then
       return result
     end
-    local api = {}
-    for k, v in pairs(env) do
-      if not _table_blacklist[k] then
-        api[k] = v
-      end
-    end
-    return api
   end
 end
 
