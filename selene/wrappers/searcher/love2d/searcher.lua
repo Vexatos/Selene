@@ -10,8 +10,11 @@ lib.libenv = libenv
 
 local function selene_loader(path)
   return function(name)
-    local source = love.filesystem.read(path)
-    local f = assert(libenv.load(libenv._selene._parse(source), path))
+    local source, message = love.filesystem.read(path)
+    if not source then
+      error(message)
+    end
+    local f = assert(libenv.load(libenv._selene._parse(source), "@" .. path))
     local result = f(name)
     if result then
       return result
